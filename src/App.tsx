@@ -1,6 +1,13 @@
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import MainPage from "@/pages/MainPage";
+
 const App = () => {
   return (
-    <div>App</div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainPage />} />
+      </Routes>
+    </Router>
   )
 }
 
