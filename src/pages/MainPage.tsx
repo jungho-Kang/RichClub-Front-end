@@ -16,6 +16,10 @@ import PortfolioCard from "@/components/stock/PortfolioCard";
 import StockCard from "@/components/stock/StockCard";
 
 import type { Period, PricePoint } from "@/types/stock";
+import Modal from "@/components/ui/Modal";
+import Login from "@/components/auth/Login";
+import { useModalStore } from "@/stores/useModalStore";
+import SignUp from "@/components/auth/SignUp";
 
 /* 데이터 생성 로직 */
 // 랜덤 시드 기반 데이터 생성기 (테스트용)
@@ -143,6 +147,7 @@ const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
 export default function MainPage() {
+  const { close, isOpen, mode, onChangeMode } = useModalStore();
   const { period } = useChartStore();
 
   /* 데이터 가공 */
@@ -210,6 +215,16 @@ export default function MainPage() {
           <ReportList won={won} />
         </div>
       </div>
+
+      <Modal
+        mode={mode}
+        onChangeMode={onChangeMode}
+        open={isOpen}
+        onClose={close}
+        title="로그인 또는 회원가입으로 시작하세요"
+      >
+        {mode === "login" ? <Login /> : <SignUp />}
+      </Modal>
     </div>
   );
 }
