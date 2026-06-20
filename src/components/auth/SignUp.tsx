@@ -64,7 +64,7 @@ const SignUp = () => {
   const onSubmit = async (data: SignUpForm) => {
     try {
       const res = await axios.post("/api/v1/auth/signup", data);
-
+      console.log(res);
       await axios.post("/api/v1/auth/email-verification/request", {
         email: data.email,
       });
