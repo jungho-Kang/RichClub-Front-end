@@ -30,7 +30,7 @@ export default function TradeHistoryPanel({
         onClick={onClose}
       />
 
-      <div className="fixed right-0 top-0 z-10 min-h-screen bg-zinc-900 border border-white/10 rounded-xl w-100 flex flex-col shadow-2xl">
+      <div className="fixed right-0 top-0 z-10 min-h-screen bg-zinc-900 border border-white/10 rounded-xl w-full flex flex-col shadow-2xl">
         {/* 매매일지 목록 */}
         {step === "list" && (
           <TradeHistoryList onClose={onClose} setStep={setStep} />
