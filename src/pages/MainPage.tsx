@@ -1,9 +1,14 @@
 import { PenLine } from "lucide-react";
 
-import { useEffect, useMemo } from "react";
+import type { Period, PricePoint } from "@/types/stock";
+
+import { useEffect, useMemo, useState } from "react";
 
 import { useChartStore } from "@/stores/useChartStore";
+import { useModalStore } from "@/stores/useModalStore";
 
+import Login from "@/components/auth/Login";
+import SignUp from "@/components/auth/SignUp";
 import ChartControls from "@/components/chart/ChartControls";
 import MACDChart from "@/components/chart/MACDChart";
 import PriceChart from "@/components/chart/PriceChart";
@@ -14,12 +19,8 @@ import ReportList from "@/components/report/ReportList";
 import AIStockList from "@/components/stock/AIStockList";
 import PortfolioCard from "@/components/stock/PortfolioCard";
 import StockCard from "@/components/stock/StockCard";
-
-import type { Period, PricePoint } from "@/types/stock";
+import TradeHistoryPanel from "@/components/trade-history/TradeHistoryPanel";
 import Modal from "@/components/ui/Modal";
-import Login from "@/components/auth/Login";
-import { useModalStore } from "@/stores/useModalStore";
-import SignUp from "@/components/auth/SignUp";
 
 /* 데이터 생성 로직 */
 // 랜덤 시드 기반 데이터 생성기 (테스트용)
@@ -147,6 +148,7 @@ const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
 export default function MainPage() {
+  const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
   const { close, isOpen, mode, onChangeMode } = useModalStore();
   const { period } = useChartStore();
 
@@ -200,7 +202,10 @@ export default function MainPage() {
             <AIStockList won={won} pct={pct} />
 
             {/* 매매일지 버튼 */}
-            <button className="w-full flex items-center justify-center gap-2 bg-[#141519] border border-[#26272c] hover:border-zinc-600 rounded-2xl py-3 text-sm font-medium text-zinc-300 transition-colors">
+            <button
+              onClick={() => setIsTradeHistoryOpen(true)}
+              className="w-full flex items-center justify-center gap-2 bg-[#141519] border border-[#26272c] hover:border-zinc-600 rounded-2xl py-3 text-sm font-medium text-zinc-300 transition-colors"
+            >
               <PenLine className="w-4 h-4" />
               매매일지 작성
             </button>
@@ -225,6 +230,12 @@ export default function MainPage() {
       >
         {mode === "login" ? <Login /> : <SignUp />}
       </Modal>
+
+      {/* 매매일지 */}
+      <TradeHistoryPanel
+        isOpen={isTradeHistoryOpen}
+        onClose={() => setIsTradeHistoryOpen(false)}
+      />
     </div>
   );
 }

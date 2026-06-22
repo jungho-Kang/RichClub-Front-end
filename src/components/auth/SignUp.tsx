@@ -2,18 +2,18 @@ import axios, { AxiosError } from "axios";
 import Swal from "sweetalert2";
 import * as yup from "yup";
 
+import { useModalStore } from "@/stores/useModalStore";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 
 interface SignUpForm {
-  nickname: string;
+  name: string;
   email: string;
   password: string;
 }
 
 const schema = yup.object({
-  nickname: yup
+  name: yup
     .string()
     .min(2, "닉네임은 2자 이상 입력해주세요.")
     .max(10, "닉네임은 10자 이하로 입력해주세요.")
@@ -39,7 +39,7 @@ const schema = yup.object({
 });
 
 const SignUp = () => {
-  const navigate = useNavigate();
+  const { close } = useModalStore();
 
   const {
     register,
@@ -56,7 +56,7 @@ const SignUp = () => {
       html: message,
       icon: "error",
       background: "#101319",
-      color: "#fff",
+      color: "#c0b7b7",
       confirmButtonColor: "#6F4CDB",
     });
   };
@@ -65,19 +65,23 @@ const SignUp = () => {
     try {
       const res = await axios.post("/api/v1/auth/signup", data);
       console.log(res);
-      await axios.post("/api/v1/auth/email-verification/request", {
-        email: data.email,
-      });
-
-      navigate("/auth/email", {
-        replace: true,
-        state: { email: data.email },
+      Swal.fire({
+        title: "회원가입 성공",
+        html: "가입이 정상적으로 처리되었습니다",
+        icon: "success",
+        background: "#101319",
+        color: "#c0b7b7",
+        confirmButtonColor: "#6F4CDB",
+      }).then(result => {
+        if (result.isConfirmed) {
+          close();
+        }
       });
     } catch (error: unknown) {
       const err = error as AxiosError<any>;
 
       const message =
-        err.response?.status === 400
+        err.response?.status === 409
           ? "이미 사용 중인 이메일입니다."
           : "입력 정보를 다시 확인해주세요.";
 
@@ -95,13 +99,11 @@ const SignUp = () => {
             <input
               type="text"
               placeholder="사용할 닉네임"
-              {...register("nickname")}
+              {...register("name")}
               className="mt-1 w-full px-4 py-2 rounded-lg bg-[#101319] border border-[#262B36] text-white focus:outline-none focus:border-[#6F4CDB] focus:ring-1 focus:ring-[#6F4CDB]"
             />
-            {errors.nickname && (
-              <p className="text-xs text-red-400 mt-1">
-                {errors.nickname.message}
-              </p>
+            {errors.name && (
+              <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>
             )}
           </div>
 

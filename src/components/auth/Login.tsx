@@ -3,9 +3,9 @@ import Swal from "sweetalert2";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 
 import InputField from "@/components/ui/InputField";
+import { useModalStore } from "@/stores/useModalStore";
 
 interface LoginForm {
   email: string;
@@ -13,7 +13,7 @@ interface LoginForm {
 }
 
 const Login = () => {
-  const navigate = useNavigate();
+  const { close } = useModalStore();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -22,33 +22,35 @@ const Login = () => {
     formState: { errors, isValid },
   } = useForm<LoginForm>({ mode: "onChange" });
 
-  const showAlert = (title: string, text: string, icon: any) => {
-    return Swal.fire({
-      title,
-      text,
-      icon,
-      background: "#101319",
-      color: "#fff",
-      confirmButtonColor: "#6F4CDB",
-    });
-  };
-
   const onSubmit = async (data: LoginForm) => {
     if (loading) return;
 
     try {
       setLoading(true);
 
-      const res = await axios.post("/api/v1/auth/login", data);
+      const res = await axios.post("/api/v1/auth/login", data, {
+        withCredentials: true,
+      });
+      console.log(res);
 
-      await showAlert("로그인 성공", res.data.message, "success");
-
-      navigate("/", { replace: true });
+      await Swal.fire({
+        title: "로그인 성공",
+        text: "로그인이 정상적으로 완료되었습니다.",
+        icon: "success",
+        background: "#101319",
+        color: "#fff",
+        confirmButtonColor: "#6F4CDB",
+      });
+      close();
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "로그인 정보를 확인해주세요.";
-
-      await showAlert("로그인 실패", message, "error");
+      await Swal.fire({
+        title: "로그인 실패",
+        text: "로그인 정보를 확인해주세요.",
+        icon: "error",
+        background: "#101319",
+        color: "#fff",
+        confirmButtonColor: "#6F4CDB",
+      });
     } finally {
       setLoading(false);
     }

@@ -1,13 +1,25 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: {  
+  resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      "@": path.resolve(__dirname, "src"),
     },
   },
-})
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://richclub.efforthye.dev",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+  define: {
+    global: "window",
+  },
+});

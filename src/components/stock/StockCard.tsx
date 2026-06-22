@@ -57,9 +57,8 @@ const StockCard = ({ last, prev, won, pct }: StockCardProps) => {
             {pct(priceChangePct)}
           </span>
         </div>
-        <button className="flex items-center gap-1.5 text-xs font-medium bg-zinc-800/70 hover:bg-zinc-800 rounded-lg px-3 py-2 transition-colors">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          AI 예측 분석
+        <button className="text-xs bg-zinc-800/70 hover:bg-zinc-800 rounded-lg px-3 py-2">
+          ★ 관심종목
         </button>
       </div>
     </div>
