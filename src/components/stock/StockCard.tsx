@@ -1,5 +1,5 @@
 import type { PricePoint } from "@/types/stock";
-import { Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
 // 종목 정보
 const STOCK = {
