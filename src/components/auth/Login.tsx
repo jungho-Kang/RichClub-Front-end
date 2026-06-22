@@ -22,6 +22,15 @@ const Login = () => {
     formState: { errors, isValid },
   } = useForm<LoginForm>({ mode: "onChange" });
 
+  const test = async () => {
+    try {
+      const res = await axios.get("/api/v1/auth/me");
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const onSubmit = async (data: LoginForm) => {
     if (loading) return;
 
@@ -42,6 +51,7 @@ const Login = () => {
         confirmButtonColor: "#6F4CDB",
       });
       close();
+      test();
     } catch (error: any) {
       await Swal.fire({
         title: "로그인 실패",

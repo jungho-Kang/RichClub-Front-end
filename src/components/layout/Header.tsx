@@ -7,18 +7,10 @@ const Header = () => {
   const { open, onChangeMode } = useModalStore();
   const accessToken = getCookie("access_token");
 
-  const test = () => {
-    fetch("https://richclub.efforthye.dev/api/v1/auth/me", {
-      credentials: "include",
-    })
-      .then(r => r.json())
-      .then(console.log);
-  };
-
   useEffect(() => {
     console.log("이거 데이터 나옴???????????????????????????????", accessToken);
     console.log(document.cookie);
-    test();
+    // test();
   }, []);
 
   // TODO : 종목 검색 만들기
