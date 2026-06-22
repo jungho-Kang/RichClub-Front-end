@@ -3,9 +3,12 @@ import Swal from "sweetalert2";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { setCookie } from "@/utils/cookie";
+
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useModalStore } from "@/stores/useModalStore";
 
 import InputField from "@/components/ui/InputField";
-import { useModalStore } from "@/stores/useModalStore";
 
 interface LoginForm {
   email: string;
@@ -13,6 +16,7 @@ interface LoginForm {
 }
 
 const Login = () => {
+  const { login } = useAuthStore();
   const { close } = useModalStore();
   const [loading, setLoading] = useState(false);
 
@@ -22,25 +26,15 @@ const Login = () => {
     formState: { errors, isValid },
   } = useForm<LoginForm>({ mode: "onChange" });
 
-  const test = async () => {
-    try {
-      const res = await axios.get("/api/v1/auth/me");
-      console.log(res);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const onSubmit = async (data: LoginForm) => {
     if (loading) return;
 
     try {
       setLoading(true);
 
-      const res = await axios.post("/api/v1/auth/login", data, {
-        withCredentials: true,
-      });
-      console.log(res);
+      const res = await axios.post("/api/v1/auth/login", data);
+      const accessToken = res.data.access_token;
+      setCookie("accessToken", accessToken);
 
       await Swal.fire({
         title: "로그인 성공",
@@ -51,7 +45,7 @@ const Login = () => {
         confirmButtonColor: "#6F4CDB",
       });
       close();
-      test();
+      login();
     } catch (error: any) {
       await Swal.fire({
         title: "로그인 실패",

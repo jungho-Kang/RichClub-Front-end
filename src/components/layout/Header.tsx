@@ -1,17 +1,58 @@
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useModalStore } from "@/stores/useModalStore";
-import { getCookie } from "@/utils/cookie";
+import { getCookie, removeCookie } from "@/utils/cookie";
+import axios from "axios";
 import { Activity } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+
+interface User {
+  email: string;
+  name: string;
+}
 
 const Header = () => {
+  const [user, setUser] = useState<User | null>(null);
   const { open, onChangeMode } = useModalStore();
-  const accessToken = getCookie("access_token");
+  const { logout } = useAuthStore();
+  const accessToken = getCookie("accessToken");
+
+  const getUserInfo = async () => {
+    try {
+      const res = await axios.get("/api/v1/auth/me");
+      const { email, name } = res.data;
+      console.log(email, name);
+      setUser({ email, name });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const postLogout = async () => {
+    try {
+      const res = await axios.post("/api/v1/auth/logout");
+      console.log(res);
+      await Swal.fire({
+        title: "로그아웃 완료",
+        text: "정상적으로 로그아웃되었습니다.",
+        icon: "success",
+        background: "#101319",
+        color: "#fff",
+        confirmButtonColor: "#6F4CDB",
+      });
+      logout();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
-    console.log("이거 데이터 나옴???????????????????????????????", accessToken);
-    console.log(document.cookie);
-    // test();
-  }, []);
+    if (accessToken) {
+      getUserInfo();
+    } else {
+      setUser(null);
+    }
+  }, [accessToken]);
 
   // TODO : 종목 검색 만들기
   return (
@@ -38,8 +79,10 @@ const Header = () => {
             {/* 사용자 정보 */}
             <div className="flex items-center gap-3">
               <div className="text-right leading-tight">
-                <div className="text-xs text-zinc-200 font-medium">사용자</div>
-                <div className="text-[10px] text-zinc-500">로그인 상태</div>
+                <div className="text-xs text-zinc-200 font-medium">
+                  {user?.name}
+                </div>
+                <div className="text-[10px] text-zinc-500">{user?.email}</div>
               </div>
 
               <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#7C5CFF] to-[#B794F4]" />
@@ -48,8 +91,8 @@ const Header = () => {
             {/* 버튼 */}
             <button
               onClick={() => {
-                open();
-                onChangeMode("login");
+                removeCookie("accessToken");
+                postLogout();
               }}
               className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5 transition-all"
             >
