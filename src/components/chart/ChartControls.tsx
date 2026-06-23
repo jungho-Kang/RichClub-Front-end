@@ -1,42 +1,20 @@
-import type { Period } from "@/types/stock";
 import MAToggle from "@/components/ui/MAToggle";
 import { useChartStore } from "@/stores/useChartStore";
 
-interface ChartControlsProps {
-  PERIOD_DAYS: Record<Period, number>;
-}
-
-const ChartControls = ({ PERIOD_DAYS }: ChartControlsProps) => {
+const ChartControls = () => {
   const {
-    period,
     showMA5,
     showMA20,
     showMA60,
-    setPeriod,
+    showIchimoku,
     toggleMA5,
     toggleMA20,
     toggleMA60,
+    toggleIchimoku,
   } = useChartStore();
 
   return (
-    <div className="flex items-center justify-between flex-wrap gap-3">
-      {/* 기간 선택 */}
-      <div className="flex items-center gap-1 bg-[#141519] border border-[#26272c] rounded-xl p-1">
-        {(Object.keys(PERIOD_DAYS) as Period[]).map(p => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className={`text-xs font-medium rounded-lg px-3 py-1.5 transition-colors ${
-              period === p
-                ? "bg-white text-black"
-                : "text-zinc-400 hover:text-zinc-100"
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
-
+    <div className="flex items-center justify-end flex-wrap gap-3">
       {/* MA 토글 */}
       <div className="flex items-center gap-4 text-xs text-zinc-400">
         <MAToggle
@@ -56,6 +34,12 @@ const ChartControls = ({ PERIOD_DAYS }: ChartControlsProps) => {
           color="#a78bfa"
           active={showMA60}
           onClick={() => toggleMA60()}
+        />
+        <MAToggle
+          label="일목균형표"
+          color="#fff"
+          active={showIchimoku}
+          onClick={() => toggleIchimoku()}
         />
       </div>
     </div>

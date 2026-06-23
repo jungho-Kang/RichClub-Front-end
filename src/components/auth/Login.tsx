@@ -1,11 +1,10 @@
 import axios from "axios";
 import Swal from "sweetalert2";
 
+import { setCookie } from "@/utils/cookie";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { setCookie } from "@/utils/cookie";
 
-import { useAuthStore } from "@/stores/useAuthStore";
 import { useModalStore } from "@/stores/useModalStore";
 
 import InputField from "@/components/ui/InputField";
@@ -16,7 +15,6 @@ interface LoginForm {
 }
 
 const Login = () => {
-  const { login } = useAuthStore();
   const { close } = useModalStore();
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +43,7 @@ const Login = () => {
         confirmButtonColor: "#6F4CDB",
       });
       close();
-      login();
+      window.location.reload();
     } catch (error: any) {
       await Swal.fire({
         title: "로그인 실패",

@@ -14,14 +14,13 @@ interface User {
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const { open, onChangeMode } = useModalStore();
-  const { logout } = useAuthStore();
+  const { logout, login } = useAuthStore();
   const accessToken = getCookie("accessToken");
 
   const getUserInfo = async () => {
     try {
       const res = await axios.get("/api/v1/auth/me");
       const { email, name } = res.data;
-      console.log(email, name);
       setUser({ email, name });
     } catch (error) {
       console.log(error);
@@ -30,8 +29,7 @@ const Header = () => {
 
   const postLogout = async () => {
     try {
-      const res = await axios.post("/api/v1/auth/logout");
-      console.log(res);
+      await axios.post("/api/v1/auth/logout");
       await Swal.fire({
         title: "로그아웃 완료",
         text: "정상적으로 로그아웃되었습니다.",
@@ -41,6 +39,7 @@ const Header = () => {
         confirmButtonColor: "#6F4CDB",
       });
       logout();
+      window.location.reload();
     } catch (error) {
       console.log(error);
     }
@@ -49,6 +48,7 @@ const Header = () => {
   useEffect(() => {
     if (accessToken) {
       getUserInfo();
+      login();
     } else {
       setUser(null);
     }

@@ -2,7 +2,7 @@ import { PenLine } from "lucide-react";
 
 import type { Period, PricePoint } from "@/types/stock";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useChartStore } from "@/stores/useChartStore";
 import { useModalStore } from "@/stores/useModalStore";
@@ -17,7 +17,6 @@ import DisclosureList from "@/components/disclosure/DisclosureList";
 import Header from "@/components/layout/Header";
 import ReportList from "@/components/report/ReportList";
 import AIStockList from "@/components/stock/AIStockList";
-import PortfolioCard from "@/components/stock/PortfolioCard";
 import StockCard from "@/components/stock/StockCard";
 import TradeHistoryPanel from "@/components/trade-history/TradeHistoryPanel";
 import Modal from "@/components/ui/Modal";
@@ -163,10 +162,6 @@ export default function MainPage() {
   const last = data[data.length - 1];
   const prev = data[data.length - 2] ?? last;
 
-  useEffect(() => {
-    console.log(last);
-  }, []);
-
   return (
     <div className="min-h-screen w-full bg-[#0a0a0b] text-zinc-100 font-sans p-4 lg:p-6">
       <div className="max-w-350 mx-auto space-y-4">
@@ -176,23 +171,19 @@ export default function MainPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
           {/* 좌측 메인 영역 */}
           <div className="space-y-4 min-w-0">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-4">
+            <div className="w-full">
               {/* 종목 카드 */}
               <StockCard last={last} prev={prev} won={won} pct={pct} />
-              {/* 포트폴리오 카드 */}
-              <PortfolioCard won={won} pct={pct} />
             </div>
 
             {/* 기간 선택 + MA 토글 */}
-            <ChartControls PERIOD_DAYS={PERIOD_DAYS} />
+            <ChartControls />
 
-            {/* 가격 + 이동평균선 차트 */}
-            <PriceChart data={data} />
-
-            {/* RSI / MACD 차트 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <RSIChart data={data} last={last} />
-              <MACDChart data={data} last={last} />
+            <div className="flex flex-col gap-3">
+              {/* 가격 + 이동평균선 차트 */}
+              <PriceChart />
+              <RSIChart />
+              <MACDChart />
             </div>
           </div>
 

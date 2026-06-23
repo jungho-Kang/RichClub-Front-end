@@ -63,8 +63,7 @@ const SignUp = () => {
 
   const onSubmit = async (data: SignUpForm) => {
     try {
-      const res = await axios.post("/api/v1/auth/signup", data);
-      console.log(res);
+      await axios.post("/api/v1/auth/signup", data);
       Swal.fire({
         title: "회원가입 성공",
         html: "가입이 정상적으로 처리되었습니다",

@@ -11,19 +11,13 @@ export interface PricePoint {
 }
 
 export interface AIStock {
-  name: string;
-  code: string;
-  price: number;
-  changePct: number;
-
-  // AI 관련
-  signal?: "매수" | "매도" | "관망";
-  confidence?: number;
-
-  // 사용자 관련 (있으면)
-  shares?: number;
-  avgPrice?: number;
-  pnlPct?: number;
+  confidence?: string;
+  current_price: number;
+  predicted_at: string;
+  signal: "매수" | "매도" | "관망";
+  signal_label: number;
+  stock_code: string;
+  stock_name: string;
 }
 
 export interface Disclosure {
