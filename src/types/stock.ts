@@ -36,5 +36,3 @@ export interface Report {
   time: string;
   targetPrice: number;
 }
-
-export type Period = "1개월" | "3개월" | "6개월";

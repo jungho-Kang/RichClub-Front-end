@@ -44,7 +44,7 @@ const AIStockList = ({ won }: AIStockListProps) => {
   }, []);
 
   return (
-    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 flex flex-col min-h-200 h-full">
+    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 flex flex-col min-h-260 h-full">
       {/* 헤더 + 탭 */}
       <div className="flex items-center justify-between mb-3">
         <div className="text-xs font-medium text-zinc-300 px-1">
@@ -70,7 +70,7 @@ const AIStockList = ({ won }: AIStockListProps) => {
       </div>
 
       {/* 리스트 */}
-      <div className="space-y-3 overflow-y-auto max-h-180 pr-1 scrollbar-thumb-amber-50">
+      <div className="space-y-3 overflow-y-auto max-h-240 pr-1 scrollbar-thumb-amber-50">
         {tab === "매수"
           ? buyPredictions?.map((h, i) => (
               <div

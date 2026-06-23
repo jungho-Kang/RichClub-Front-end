@@ -61,7 +61,7 @@ const ReportList = ({ won }: ReportListProps) => {
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
       <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
         <FileBarChart2 className="w-4 h-4 text-zinc-400" />
-        증권사 리포트
+        뉴스
       </h3>
       <div className="space-y-4">
         {REPORTS.map((r, i) => (

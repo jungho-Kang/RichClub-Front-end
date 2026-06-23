@@ -59,7 +59,7 @@ const DisclosureList = () => {
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
       <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
         <Megaphone className="w-4 h-4 text-zinc-400" />
-        공시정보
+        시장지표
       </h3>
       <div className="space-y-4">
         {DISCLOSURES.map((d, i) => (

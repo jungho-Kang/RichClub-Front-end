@@ -32,7 +32,7 @@ export default function TradeHistoryPanel({
     <>
       {/* 배경 blur */}
       <div
-        className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 z-5 bg-black/40 backdrop-blur-sm"
         onClick={handleClose}
       />
 

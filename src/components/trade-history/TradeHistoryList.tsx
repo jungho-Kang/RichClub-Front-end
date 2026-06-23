@@ -1,60 +1,88 @@
+import type { Step, TradeHistory } from "@/types/trade-history";
+import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
-import type { Step, TradeType } from "@/types/trade-history";
 
+import { BADGE } from "@/constants/tradeStyles";
+import axios from "axios";
+import dayjs from "dayjs";
 import TradeHistoryHeader from "./TradeHistoryHeader";
-
-interface Entry {
-  id: string;
-  stock: string;
-  type: TradeType;
-  price: number;
-  qty: number;
-  date: string;
-  memo: string;
-}
+import Swal from "sweetalert2";
 
 interface TradeHistoryListProps {
   onClose: () => void;
   setStep: React.Dispatch<React.SetStateAction<Step>>;
 }
 
-const INITIAL_ENTRIES: Entry[] = [
-  {
-    id: "1",
-    stock: "삼성전자",
-    type: "매수",
-    price: 68400,
-    qty: 58,
-    date: "2025-06-12",
-    memo: "20일선 지지 확인, RSI 35 반등 시도. 1차 분할 매수.",
-  },
-  {
-    id: "2",
-    stock: "LG에너지솔루션",
-    type: "관망",
-    price: 372000,
-    qty: 0,
-    date: "2025-06-15",
-    memo: "데드크로스 우려로 추가 매수 보류. 추세 확인 후 대응.",
-  },
-];
-
-const BADGE: Record<TradeType, string> = {
-  매수: "bg-green-500/20 text-green-400",
-  매도: "bg-red-500/20 text-red-400",
-  관망: "bg-zinc-500/20 text-zinc-400",
-};
+interface TradeData extends TradeHistory {
+  id: string;
+  total_amount: number;
+  traded_at: string;
+}
 
 const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
+  const [tradeData, setTradeData] = useState<TradeData[]>([]);
+
   const goToForm = () => {
     setStep("form");
   };
 
-  const [entries, setEntries] = useState<Entry[]>(INITIAL_ENTRIES);
+  const getTradeHistory = async () => {
+    try {
+      const res = await axios.get("/api/v1/trade-log");
+      console.log(res.data);
+      setTradeData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteTradeHistory = async (id: string) => {
+    return axios.delete(`/api/v1/trade-log/${id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    const result = await Swal.fire({
+      title: "삭제하시겠어요?",
+      text: "삭제된 기록은 복구할 수 없습니다.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "삭제",
+      cancelButtonText: "취소",
+      background: "#101319",
+      color: "#fff",
+      confirmButtonColor: "#E44B58",
+      cancelButtonColor: "#929292",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteTradeHistory(id);
+
+      setTradeData(prev => prev.filter(item => item.id !== id));
+
+      await Swal.fire({
+        title: "삭제 완료",
+        text: "기록이 정상적으로 삭제되었습니다.",
+        icon: "success",
+        background: "#101319",
+        color: "#fff",
+        confirmButtonColor: "#6F4CDB",
+      });
+    } catch (error) {
+      await Swal.fire({
+        title: "삭제 실패",
+        text: "잠시 후 다시 시도해주세요.",
+        icon: "error",
+        background: "#101319",
+        color: "#fff",
+        confirmButtonColor: "#E44B58",
+      });
+    }
+  };
 
   useEffect(() => {
-    setEntries(INITIAL_ENTRIES);
+    getTradeHistory();
   }, []);
 
   return (
@@ -63,7 +91,7 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
       <div className="flex-1 overflow-y-auto px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-zinc-500">
-            총 {entries.length}건의 기록
+            총 {tradeData.length}건의 기록
           </span>
           <button
             onClick={goToForm}
@@ -72,13 +100,13 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
             <Plus className="w-3.5 h-3.5" />새 기록
           </button>
         </div>
-        {entries.length === 0 ? (
+        {tradeData.length === 0 ? (
           <div className="text-center text-zinc-600 text-sm py-10">
             기록이 없습니다.
           </div>
         ) : (
           <div className="space-y-2">
-            {entries.map(e => (
+            {tradeData.map(e => (
               <div
                 key={e.id}
                 className="bg-white/4 border border-white/8 rounded-lg px-3 py-2.5 hover:border-white/16 transition-colors cursor-pointer"
@@ -86,24 +114,40 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${BADGE[e.type]}`}
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${BADGE[e.trade_type]}`}
                     >
-                      {e.type}
+                      {e.trade_type}
                     </span>
                     <span className="text-sm font-medium text-zinc-200">
-                      {e.stock}
+                      {e.stock_name}
                     </span>
                   </div>
-                  <span className="text-xs text-zinc-600">{e.date}</span>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-600">
+                      {dayjs(e.traded_at).format("YYYY-MM-DD")}
+                    </span>
+                  </div>
                 </div>
-                {(e.price > 0 || e.qty > 0) && (
+
+                {(e.price > 0 || e.quantity > 0) && (
                   <p className="text-xs text-zinc-500 mb-1">
-                    체결가 ₩{e.price.toLocaleString()} · {e.qty}주
+                    체결가 ₩{e.price.toLocaleString()} · {e.quantity}주
                   </p>
                 )}
                 <p className="text-xs text-zinc-400 leading-relaxed">
                   {e.memo}
                 </p>
+                {/* 하단: 삭제 버튼 */}
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => handleDelete(e.id)}
+                    className="flex items-center gap-1 text-[11px] text-zinc-500 border border-white/10 rounded px-2 py-1 hover:text-red-400 hover:border-red-400/30 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    삭제
+                  </button>
+                </div>
               </div>
             ))}
           </div>
