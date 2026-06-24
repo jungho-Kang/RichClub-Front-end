@@ -6,6 +6,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useChartStore } from "@/stores/useChartStore";
+import { useStockStore } from "@/stores/useStockStore";
 
 interface RSIData {
   date: string;
@@ -24,6 +25,7 @@ const RSIChart = () => {
   const signalSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   const [data, setData] = useState<RSIData[]>([]);
+  const { selectedStock } = useStockStore();
   const { hoveredDate, setHoveredDate } = useChartStore();
 
   const calcRSISignal = (data: number[], period: number) => {
@@ -47,9 +49,12 @@ const RSIChart = () => {
   // ================= API =================
   const getRSIData = async () => {
     try {
-      const res = await axios.get(`/api/v1/stock/chart/rsi/${"005930"}`, {
-        params: { period: "6m" },
-      });
+      const res = await axios.get(
+        `/api/v1/stock/chart/rsi/${selectedStock.stock_code}`,
+        {
+          params: { period: "6m" },
+        },
+      );
       const data: RSIData[] = res.data.data;
       // signalValues 계산해서 dataState에 넣기
       if (data) {
@@ -69,7 +74,7 @@ const RSIChart = () => {
 
   useEffect(() => {
     getRSIData();
-  }, []);
+  }, [selectedStock]);
 
   // ================= 차트 =================
   useEffect(() => {

@@ -1,10 +1,13 @@
+import axios from "axios";
+import Swal from "sweetalert2";
+import { Activity } from "lucide-react";
+import { useEffect, useState } from "react";
+
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useModalStore } from "@/stores/useModalStore";
 import { getCookie, removeCookie } from "@/utils/cookie";
-import axios from "axios";
-import { Activity } from "lucide-react";
-import { useEffect, useState } from "react";
-import Swal from "sweetalert2";
+
+import SearchBar from "@/components/ui/SearchBar";
 
 interface User {
   email: string;
@@ -73,6 +76,15 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* 검색바 추가 */}
+      <SearchBar
+        onSelect={item => {
+          console.log("선택:", item);
+          // TODO: 해당 종목 페이지 이동 or 차트 로드
+        }}
+      />
+
       <div>
         {accessToken ? (
           <div className="flex items-center gap-4">

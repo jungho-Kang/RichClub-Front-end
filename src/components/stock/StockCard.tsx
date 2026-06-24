@@ -1,5 +1,9 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { TrendingDown, TrendingUp } from "lucide-react";
+
+import { BADGE } from "@/constants/tradeStyles";
+import { useStockStore } from "@/stores/useStockStore";
 
 interface StockDetail {
   current_price: number;
@@ -7,6 +11,10 @@ interface StockDetail {
   signal: "매수" | "매도" | "관망";
   stock_code: string;
   stock_name: string;
+  change_pct: number;
+
+  confidence?: number;
+  signal_label?: number;
 }
 
 interface StockCardProps {
@@ -20,23 +28,23 @@ const InitData: StockDetail = {
   signal: "관망",
   stock_code: "",
   stock_name: "",
+  change_pct: 0,
 };
 
-const StockCard = ({ won }: StockCardProps) => {
+const StockCard = ({ won, pct }: StockCardProps) => {
   const [data, setData] = useState<StockDetail>(InitData);
+  const { selectedStock } = useStockStore();
 
   const getStockDetail = async () => {
     try {
       const res = await axios.get("/api/v1/stock/ai/predictions", {
         params: {
-          stock_name: "삼성전자",
-          limit: 1,
+          stock_name: selectedStock.stock_name,
         },
       });
       console.log(res.data);
-      const { current_price, predicted_at, signal, stock_code, stock_name } =
-        res.data[0];
-      setData({ current_price, predicted_at, signal, stock_code, stock_name });
+
+      setData(res.data[0]);
     } catch (error) {
       console.log(error);
     }
@@ -44,7 +52,7 @@ const StockCard = ({ won }: StockCardProps) => {
 
   useEffect(() => {
     getStockDetail();
-  }, []);
+  }, [selectedStock]);
 
   return (
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
@@ -55,15 +63,14 @@ const StockCard = ({ won }: StockCardProps) => {
           <span className="text-[11px] text-zinc-500 font-mono">
             {data?.stock_code}
           </span>
-          {/* <span className="text-[11px] text-zinc-400 bg-zinc-800/70 rounded px-1.5 py-0.5">
-            {STOCK.sector}
-          </span> */}
         </div>
 
         {/* AI 시그널 */}
         <div className="flex flex-col items-end gap-1 shrink-0">
           <span className="text-xs text-zinc-400 font-medium">AI 시그널</span>
-          <span className="text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 rounded-md px-2.5 py-1">
+          <span
+            className={`text-xs font-bold rounded-md px-2.5 py-1 ${BADGE[data.signal]}`}
+          >
             {data.signal}
           </span>
         </div>
@@ -75,18 +82,18 @@ const StockCard = ({ won }: StockCardProps) => {
           <span className="text-3xl font-bold tracking-tight italic">
             {won(data.current_price)}
           </span>
-          {/* <span
+          <span
             className={`flex items-center gap-0.5 text-sm font-semibold ${
-              isUp ? "text-emerald-400" : "text-rose-400"
+              data.change_pct > 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {isUp ? (
+            {data.change_pct > 0 ? (
               <TrendingUp className="w-3.5 h-3.5" />
             ) : (
               <TrendingDown className="w-3.5 h-3.5" />
             )}
-            {pct(priceChangePct)}
-          </span> */}
+            {pct(data.change_pct)}
+          </span>
         </div>
 
         {/* 근거 */}

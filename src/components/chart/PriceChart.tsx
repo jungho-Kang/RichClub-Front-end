@@ -6,6 +6,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useChartStore } from "@/stores/useChartStore";
 import axios from "axios";
+import { useStockStore } from "@/stores/useStockStore";
 
 interface CandleData {
   close: number;
@@ -39,6 +40,7 @@ const PriceChart = () => {
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
   const [candleData, setCandleData] = useState<CandleData[]>([]);
+  const { selectedStock } = useStockStore();
   const {
     showMA5,
     showMA20,
@@ -51,9 +53,12 @@ const PriceChart = () => {
   // ================= API =================
   const getCandleData = async () => {
     try {
-      const res = await axios.get(`/api/v1/stock/chart/candle/${"005930"}`, {
-        params: { days: 180 },
-      });
+      const res = await axios.get(
+        `/api/v1/stock/chart/candle/${selectedStock.stock_code}`,
+        {
+          params: { days: 180 },
+        },
+      );
       setCandleData(res.data.data);
     } catch (error) {
       console.log(error);
@@ -62,7 +67,7 @@ const PriceChart = () => {
 
   useEffect(() => {
     getCandleData();
-  }, []);
+  }, [selectedStock]);
 
   // ================= utils =================
   const addDays = (dateStr: string, days: number) => {

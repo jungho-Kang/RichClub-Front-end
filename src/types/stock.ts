@@ -36,3 +36,8 @@ export interface Report {
   time: string;
   targetPrice: number;
 }
+
+export interface SelectedStockItem {
+  stock_code: string;
+  stock_name: string;
+}

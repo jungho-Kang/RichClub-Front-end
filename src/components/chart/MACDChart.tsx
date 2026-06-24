@@ -6,6 +6,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useChartStore } from "@/stores/useChartStore";
+import { useStockStore } from "@/stores/useStockStore";
 
 interface MACDData {
   date: string;
@@ -25,14 +26,18 @@ const MACDChart = () => {
   const histSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
   const [data, setData] = useState<MACDData[]>([]);
+  const { selectedStock } = useStockStore();
   const { hoveredDate, setHoveredDate } = useChartStore();
 
   // ================= API =================
   const getMACDData = async () => {
     try {
-      const res = await axios.get(`/api/v1/stock/chart/macd/005930`, {
-        params: { period: "6m" },
-      });
+      const res = await axios.get(
+        `/api/v1/stock/chart/macd/${selectedStock.stock_code}`,
+        {
+          params: { period: "6m" },
+        },
+      );
 
       const data: MACDData[] = res.data.data ?? [];
       setData(data);
@@ -43,7 +48,7 @@ const MACDChart = () => {
 
   useEffect(() => {
     getMACDData();
-  }, []);
+  }, [selectedStock]);
 
   // ================= CHART =================
   useEffect(() => {
