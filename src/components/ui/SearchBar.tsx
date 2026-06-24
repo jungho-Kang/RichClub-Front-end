@@ -35,7 +35,6 @@ const SearchBar = () => {
       const res = await axios.get("/api/v1/stock/search", {
         params: { q },
       });
-      console.log(res.data);
 
       setList(res.data);
       setOpen(true);

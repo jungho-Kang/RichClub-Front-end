@@ -72,6 +72,7 @@ const StockCard = ({ won, pct }: StockCardProps) => {
       const res = await axios.get(
         `/api/v1/stock/ai/detail/${selectedStock.stock_code}`,
       );
+      console.log(res.data.feature_importance);
       setFeatureImportance(res.data.feature_importance);
     } catch (error) {
       console.log(error);
@@ -94,8 +95,10 @@ const StockCard = ({ won, pct }: StockCardProps) => {
     targetFeatures.includes(item.feature),
   );
 
-  const buySignals = filtered.filter(item => Number(item.value) >= 1);
-  const sellSignals = filtered.filter(item => Number(item.value) < 1);
+  const buySignals =
+    filtered.length === 3 && filtered.every(item => Number(item.value) >= 1);
+  const sellSignals =
+    filtered.length === 3 && filtered.every(item => Number(item.value) < 1);
 
   const buyText = "MA5/20/60 정배열로 상승 흐름 형성";
   const sellText = "MA5/20/60 역배열로 하락 흐름 형성";
@@ -143,12 +146,15 @@ const StockCard = ({ won, pct }: StockCardProps) => {
         </div>
 
         {/* 근거 */}
-        <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded-lg px-2.5 py-1.5">
-          <div className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
-          <span className="text-[11px] text-zinc-400">
-            {buySignals ? buyText : sellSignals ? sellText : ""}
-          </span>
-        </div>
+        {buySignals ||
+          (sellSignals && (
+            <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded-lg px-2.5 py-1.5">
+              <div className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
+              <span className="text-[11px] text-zinc-400">
+                {buySignals ? buyText : sellSignals ? sellText : null}
+              </span>
+            </div>
+          ))}
       </div>
     </div>
   );
