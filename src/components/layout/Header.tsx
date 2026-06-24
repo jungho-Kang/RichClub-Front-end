@@ -78,12 +78,7 @@ const Header = () => {
       </div>
 
       {/* 검색바 추가 */}
-      <SearchBar
-        onSelect={item => {
-          console.log("선택:", item);
-          // TODO: 해당 종목 페이지 이동 or 차트 로드
-        }}
-      />
+      <SearchBar />
 
       <div>
         {accessToken ? (
