@@ -3,10 +3,13 @@ import {
   type IChartApi,
   type ISeriesApi,
 } from "lightweight-charts";
-import { useEffect, useRef, useState } from "react";
-import { useChartStore } from "@/stores/useChartStore";
 import axios from "axios";
+import { useEffect, useRef, useState } from "react";
+
+import { useChartStore } from "@/stores/useChartStore";
 import { useStockStore } from "@/stores/useStockStore";
+import { getIchimokuSeriesData } from "@/utils/chartUtils";
+import PriceChartLegend from "./PriceChartLegend";
 
 interface CandleData {
   close: number;
@@ -20,26 +23,30 @@ interface CandleData {
   volume: number;
 }
 
-const CHART_HEIGHT = 350;
+interface SignalData {
+  stock_code: string;
+  stock_name: string;
+  current_price: number;
+  change_pct: number;
+  signal: "매수" | "매도" | "관망" | string;
+  signal_label: number;
+  confidence: number | null;
+  predicted_at: string;
+}
 
-const LEGEND_ITEMS = [
-  { label: "전환선", color: "#dc2626", type: "line" },
-  { label: "기준선", color: "#2563eb", type: "line" },
-  { label: "후행스팬", color: "#fff", type: "line" },
-  { label: "선행스팬1", color: "rgba(34,197,94,0.8)", type: "line" },
-  { label: "선행스팬2", color: "rgba(239,68,68,0.8)", type: "line" },
-] as const;
+const CHART_HEIGHT = 350;
 
 const PriceChart = () => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<IChartApi | null>(null);
-
-  // series ref 추가
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
   const [candleData, setCandleData] = useState<CandleData[]>([]);
+  // 시그널 데이터 state
+  const [signalData, setSignalData] = useState<SignalData[]>([]);
+
   const { selectedStock } = useStockStore();
   const {
     showMA5,
@@ -48,6 +55,8 @@ const PriceChart = () => {
     showIchimoku,
     setHoveredDate,
     hoveredDate,
+    priceScaleWidth,
+    setPriceScaleWidth,
   } = useChartStore();
 
   // ================= API =================
@@ -55,9 +64,7 @@ const PriceChart = () => {
     try {
       const res = await axios.get(
         `/api/v1/stock/chart/candle/${selectedStock.stock_code}`,
-        {
-          params: { days: 180 },
-        },
+        { params: { days: 180 } },
       );
       setCandleData(res.data.data);
     } catch (error) {
@@ -65,63 +72,26 @@ const PriceChart = () => {
     }
   };
 
+  const getSignalData = async () => {
+    try {
+      const res = await axios.get("/api/v1/stock/ai/predictions", {
+        params: { stock_name: selectedStock.stock_name },
+      });
+      setSignalData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     getCandleData();
+    getSignalData();
   }, [selectedStock]);
 
-  // ================= utils =================
-  const addDays = (dateStr: string, days: number) => {
-    const d = new Date(dateStr);
-    d.setDate(d.getDate() + days);
-    return d.toISOString().slice(0, 10);
-  };
-
-  const subDays = (dateStr: string, days: number) => {
-    const d = new Date(dateStr);
-    d.setDate(d.getDate() - days);
-    return d.toISOString().slice(0, 10);
-  };
-
-  // ================= Ichimoku 계산 =================
-  const getIchimoku = (data: CandleData[]) => {
-    return data.map((_, i) => {
-      const slice9 = data.slice(Math.max(0, i - 8), i + 1);
-      const slice26 = data.slice(Math.max(0, i - 25), i + 1);
-      const slice52 = data.slice(Math.max(0, i - 51), i + 1);
-
-      const high9 = Math.max(...slice9.map(d => d.high));
-      const low9 = Math.min(...slice9.map(d => d.low));
-      const high26 = Math.max(...slice26.map(d => d.high));
-      const low26 = Math.min(...slice26.map(d => d.low));
-      const high52 = Math.max(...slice52.map(d => d.high));
-      const low52 = Math.min(...slice52.map(d => d.low));
-
-      const tenkan = (high9 + low9) / 2;
-      const kijun = (high26 + low26) / 2;
-      const spanA = (tenkan + kijun) / 2;
-      const spanB = (high52 + low52) / 2;
-
-      return {
-        time: data[i].datetime.slice(0, 10),
-        tenkan,
-        kijun,
-        spanA,
-        spanB,
-        close: data[i].close,
-      };
-    });
-  };
-
   useEffect(() => {
-    if (
-      !chartRef.current ||
-      !wrapperRef.current ||
-      !overlayRef.current ||
-      candleData.length === 0
-    )
+    if (!chartRef.current || !overlayRef.current || candleData.length === 0)
       return;
 
-    // 매 렌더마다 구름 캔버스를 먼저 비움 (off 전환 시 잔상 방지)
     const overlayCtx = overlayRef.current.getContext("2d");
     if (overlayCtx) {
       overlayCtx.clearRect(
@@ -144,21 +114,37 @@ const PriceChart = () => {
       localization: {
         dateFormat: "yyyy.MM.dd",
       },
+      rightPriceScale: {
+        minimumWidth: priceScaleWidth, // 전역 스토어 값 구독
+        autoScale: true,
+      },
       width: chartRef.current.clientWidth,
       height: CHART_HEIGHT,
     });
 
     chartInstance.current = chart;
 
-    // ================= Crosshair Sync (RSI / MACD 연동용) =================
+    // Y축 실제 너비를 측정해서 Zustand 스토어에 보낼 함수
+    const updateActualWidth = () => {
+      if (!chartInstance.current) return;
+      // 라이브러리가 렌더링한 실제 right 축의 픽셀 너비를 가져옵니다.
+      const actualWidth = chartInstance.current.priceScale("right").width();
+      if (actualWidth > 0) {
+        setPriceScaleWidth(actualWidth);
+      }
+    };
+
+    // 데이터가 세팅되고 차트가 그려진 직후(100ms 뒤) 실제 너비를 측정해 제보합니다.
+    const timer = setTimeout(updateActualWidth, 100);
+
+    // 브라우저 창 크기가 바뀔 때 주가 자릿수 레이아웃 변경에 대응합니다.
+    window.addEventListener("resize", updateActualWidth);
+
     chart.subscribeCrosshairMove(param => {
-      // 마우스가 차트 밖으로 나갔을 때
       if (!param.time) {
         setHoveredDate(null);
         return;
       }
-
-      // lightweight-charts의 time 값을 string으로 변환해서 저장
       setHoveredDate(param.time as string);
     });
 
@@ -166,7 +152,6 @@ const PriceChart = () => {
     overlay.width = chartRef.current.clientWidth;
     overlay.height = CHART_HEIGHT;
 
-    // ================= 캔들 =================
     const candleSeries = chart.addCandlestickSeries({
       upColor: "#3CB371",
       downColor: "#E44B58",
@@ -187,6 +172,29 @@ const PriceChart = () => {
         close: item.close,
       })),
     );
+
+    // Buy / Sell 마커 세팅 로직
+    if (signalData.length > 0) {
+      const markers = signalData
+        .filter(item => item.signal === "매수" || item.signal === "매도") // 관망 제외
+        .map(item => {
+          const isBuy = item.signal === "매수";
+          return {
+            time: item.predicted_at.slice(0, 10), // 'YYYY-MM-DD' 형식 맞추기
+            position: isBuy ? "belowBar" : "aboveBar", // 매수는 캔들 아래, 매도는 캔들 위
+            color: isBuy ? "#22c55e" : "#ef4444", // 녹색 / 빨간색
+            shape: isBuy ? "arrowUp" : "arrowDown", // 위/아래 화살표 기호
+            text: isBuy ? "BUY" : "SELL", // 표시될 텍스트
+            size: 1, // 마커 상대 크기 (기본값은 1)
+          } as const;
+        })
+        // lightweight-charts 마커 또한 반드시 시간 오름차순 정렬이어야 에러가 안 납니다.
+        .sort(
+          (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
+        );
+
+      candleSeries.setMarkers(markers);
+    }
 
     // ================= MA =================
     if (showMA5) {
@@ -222,51 +230,32 @@ const PriceChart = () => {
 
     // ================= Ichimoku (on/off) =================
     if (showIchimoku) {
-      const ichimoku = getIchimoku(candleData);
+      const { tenkanData, kijunData, chikouData, spanAData, spanBData } =
+        getIchimokuSeriesData(candleData);
 
-      // 전환선
       const tenkanSeries = chart.addLineSeries({
         color: "#dc2626",
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
       });
-      tenkanSeries.setData(
-        ichimoku.map(d => ({ time: d.time, value: d.tenkan })),
-      );
+      tenkanSeries.setData(tenkanData);
 
-      // 기준선
       const kijunSeries = chart.addLineSeries({
         color: "#2563eb",
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
       });
-      kijunSeries.setData(
-        ichimoku.map(d => ({ time: d.time, value: d.kijun })),
-      );
+      kijunSeries.setData(kijunData);
 
-      // 후행스팬 — 현재 종가를 26일 과거에 표시
       const chikouSeries = chart.addLineSeries({
         color: "#fff",
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
       });
-      chikouSeries.setData(
-        ichimoku.map(d => ({ time: subDays(d.time, 26), value: d.close })),
-      );
-
-      // 선행스팬1 (26일 선행)
-      const spanAData = ichimoku.map(d => ({
-        time: addDays(d.time, 26),
-        value: d.spanA,
-      }));
-      // 선행스팬2 (26일 선행)
-      const spanBData = ichimoku.map(d => ({
-        time: addDays(d.time, 26),
-        value: d.spanB,
-      }));
+      chikouSeries.setData(chikouData);
 
       const span1Series = chart.addLineSeries({
         color: "rgba(34,197,94,0.8)",
@@ -335,7 +324,6 @@ const PriceChart = () => {
       chart.subscribeCrosshairMove(drawCloud);
       requestAnimationFrame(() => requestAnimationFrame(drawCloud));
     } else {
-      // off 시 구름 캔버스 비우기
       const ctx = overlay.getContext("2d");
       ctx?.clearRect(0, 0, overlay.width, overlay.height);
     }
@@ -343,11 +331,22 @@ const PriceChart = () => {
     chart.timeScale().fitContent();
 
     return () => {
+      clearTimeout(timer); // 타이머 제거
+      window.removeEventListener("resize", updateActualWidth); // 이벤트 리스너 제거
       chart.remove();
       const ctx = overlay.getContext("2d");
       ctx?.clearRect(0, 0, overlay.width, overlay.height);
     };
-  }, [candleData, showMA5, showMA20, showMA60, showIchimoku]);
+  }, [candleData, showMA5, showMA20, showMA60, showIchimoku, signalData]);
+
+  // 다른 차트 컴포넌트에 의해 전역 너비(priceScaleWidth)가 늘어나면 내 차트 축도 동기화
+  useEffect(() => {
+    if (!chartInstance.current) return;
+
+    chartInstance.current.priceScale("right").applyOptions({
+      minimumWidth: priceScaleWidth,
+    });
+  }, [priceScaleWidth]);
 
   useEffect(() => {
     if (!chartInstance.current || !candleSeriesRef.current) return;
@@ -360,14 +359,11 @@ const PriceChart = () => {
       return;
     }
 
-    // 👉 해당 날짜 데이터 찾기
     const target = candleData.find(
       d => d.datetime.slice(0, 10) === hoveredDate,
     );
-
     if (!target) return;
 
-    // 👉 crosshair 이동 (이게 핵심)
     chart.setCrosshairPosition(target.close, hoveredDate as any, series);
   }, [hoveredDate, candleData]);
 
@@ -375,40 +371,13 @@ const PriceChart = () => {
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
       <h3 className="text-sm font-bold mb-3">가격・이동평균선</h3>
 
-      {/* ── 범례 ── */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
-        {showMA5 && (
-          <span className="flex items-center gap-1 text-[11px] text-gray-400">
-            <span className="inline-block w-5 h-0.5 rounded-full bg-[#fbbf24]" />
-            MA5
-          </span>
-        )}
-        {showMA20 && (
-          <span className="flex items-center gap-1 text-[11px] text-gray-400">
-            <span className="inline-block w-5 h-0.5 rounded-full bg-[#38bdf8]" />
-            MA20
-          </span>
-        )}
-        {showMA60 && (
-          <span className="flex items-center gap-1 text-[11px] text-gray-400">
-            <span className="inline-block w-5 h-0.5 rounded-full bg-[#a78bfa]" />
-            MA60
-          </span>
-        )}
-        {showIchimoku &&
-          LEGEND_ITEMS.map(({ label, color }) => (
-            <span
-              key={label}
-              className="flex items-center gap-1 text-[11px] text-gray-400"
-            >
-              <span
-                className="inline-block w-5 h-0.5 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              {label}
-            </span>
-          ))}
-      </div>
+      {/* 범례 */}
+      <PriceChartLegend
+        showMA5={showMA5}
+        showMA20={showMA20}
+        showMA60={showMA60}
+        showIchimoku={showIchimoku}
+      />
 
       {/* ── 차트 영역 ── */}
       <div

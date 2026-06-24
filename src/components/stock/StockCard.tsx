@@ -21,6 +21,21 @@ interface StockCardProps {
   won: (n: number) => string;
   pct: (n: number) => string;
 }
+type Feature =
+  | "RSI"
+  | "MACD"
+  | "스토캐스틱 K"
+  | "스토캐스틱 D"
+  | "5/20일선 비율"
+  | "20/60일선 비율"
+  | "종가/60일선 비율";
+
+interface FeatureImportance {
+  direction: string;
+  feature: Feature;
+  importance?: string | null;
+  value: string;
+}
 
 const InitData: StockDetail = {
   current_price: 0,
@@ -33,6 +48,9 @@ const InitData: StockDetail = {
 
 const StockCard = ({ won, pct }: StockCardProps) => {
   const [data, setData] = useState<StockDetail>(InitData);
+  const [featureImportance, setFeatureImportance] = useState<
+    FeatureImportance[]
+  >([]);
   const { selectedStock } = useStockStore();
 
   const getStockDetail = async () => {
@@ -49,9 +67,38 @@ const StockCard = ({ won, pct }: StockCardProps) => {
     }
   };
 
+  const getSignalDetail = async () => {
+    try {
+      const res = await axios.get(
+        `/api/v1/stock/ai/detail/${selectedStock.stock_code}`,
+      );
+      setFeatureImportance(res.data.feature_importance);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     getStockDetail();
+    getSignalDetail();
   }, [selectedStock]);
+
+  // ma 지표로 매수, 매도 시그널 추출
+  const targetFeatures = [
+    "5/20일선 비율",
+    "20/60일선 비율",
+    "종가/60일선 비율",
+  ];
+
+  const filtered = featureImportance.filter(item =>
+    targetFeatures.includes(item.feature),
+  );
+
+  const buySignals = filtered.filter(item => Number(item.value) >= 1);
+  const sellSignals = filtered.filter(item => Number(item.value) < 1);
+
+  const buyText = "MA5/20/60 정배열로 상승 흐름 형성";
+  const sellText = "MA5/20/60 역배열로 하락 흐름 형성";
 
   return (
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
@@ -99,7 +146,7 @@ const StockCard = ({ won, pct }: StockCardProps) => {
         <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded-lg px-2.5 py-1.5">
           <div className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
           <span className="text-[11px] text-zinc-400">
-            RSI 과매도 + MACD 골든크로스
+            {buySignals ? buyText : sellSignals ? sellText : ""}
           </span>
         </div>
       </div>

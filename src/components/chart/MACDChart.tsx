@@ -27,7 +27,7 @@ const MACDChart = () => {
 
   const [data, setData] = useState<MACDData[]>([]);
   const { selectedStock } = useStockStore();
-  const { hoveredDate, setHoveredDate } = useChartStore();
+  const { hoveredDate, setHoveredDate, priceScaleWidth } = useChartStore();
 
   // ================= API =================
   const getMACDData = async () => {
@@ -65,6 +65,14 @@ const MACDChart = () => {
       },
       localization: {
         dateFormat: "yyyy.MM.dd",
+        // 값이 정확히 0일 때만 표기하고 나머지는 숨김 처리
+        priceFormatter: (price: number) => {
+          return price === 0 ? "0" : "";
+        },
+      },
+      rightPriceScale: {
+        minimumWidth: priceScaleWidth, // 전역 스토어 값 구독
+        autoScale: true,
       },
       width: chartRef.current.clientWidth,
       height: CHART_HEIGHT,
@@ -77,6 +85,7 @@ const MACDChart = () => {
       color: "#e4e4e7",
       lineWidth: 2,
       priceLineVisible: false,
+      lastValueVisible: false,
     });
 
     macdSeriesRef.current = macdSeries;
@@ -93,6 +102,7 @@ const MACDChart = () => {
       color: "#f59e0b",
       lineWidth: 2,
       priceLineVisible: false,
+      lastValueVisible: false,
     });
 
     signalSeriesRef.current = signalSeries;
@@ -108,6 +118,7 @@ const MACDChart = () => {
     const histSeries = chart.addHistogramSeries({
       color: "#10b981",
       priceLineVisible: false,
+      lastValueVisible: false,
     });
 
     histSeriesRef.current = histSeries;
@@ -151,16 +162,10 @@ const MACDChart = () => {
     );
   }, [hoveredDate, data]);
 
-  const last = data.length > 0 ? data[data.length - 1] : null;
-
   return (
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4">
       <div className="flex justify-between mb-3">
         <h3 className="text-sm font-bold">MACD (12, 26, 9)</h3>
-
-        <span className="text-sm text-zinc-200">
-          {last ? last.macd.toFixed(2) : "-"}
-        </span>
       </div>
 
       <div ref={chartRef} style={{ height: CHART_HEIGHT }} />

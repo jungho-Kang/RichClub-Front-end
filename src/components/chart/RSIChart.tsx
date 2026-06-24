@@ -26,7 +26,7 @@ const RSIChart = () => {
 
   const [data, setData] = useState<RSIData[]>([]);
   const { selectedStock } = useStockStore();
-  const { hoveredDate, setHoveredDate } = useChartStore();
+  const { hoveredDate, setHoveredDate, priceScaleWidth } = useChartStore();
 
   const calcRSISignal = (data: number[], period: number) => {
     const result: (number | null)[] = [];
@@ -91,6 +91,10 @@ const RSIChart = () => {
       },
       localization: {
         dateFormat: "yyyy.MM.dd",
+      },
+      rightPriceScale: {
+        minimumWidth: priceScaleWidth, // 전역 스토어 값 구독
+        autoScale: true,
       },
       width: chartRef.current.clientWidth,
       height: CHART_HEIGHT,
