@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/naver-news/:path*",
+      "destination": "https://openapi.naver.com/v1/search/news.json?:path*"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://richclub.efforthye.dev/api/$1"
     },

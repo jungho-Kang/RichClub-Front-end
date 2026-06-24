@@ -37,6 +37,10 @@ const NewsList = () => {
       try {
         const res = await axios.get("/naver-news", {
           params: { query },
+          headers: {
+            "X-Naver-Client-Id": import.meta.env.VITE_NAVER_CLIENT_ID,
+            "X-Naver-Client-Secret": import.meta.env.VITE_NAVER_CLIENT_SECRET,
+          },
         });
 
         setNews(res.data.items || []);
