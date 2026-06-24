@@ -11,13 +11,15 @@ export interface PricePoint {
 }
 
 export interface AIStock {
-  confidence?: string;
   current_price: number;
   predicted_at: string;
   signal: "매수" | "매도" | "관망";
-  signal_label: number;
   stock_code: string;
   stock_name: string;
+  change_pct: number;
+
+  confidence?: number;
+  signal_label?: number;
 }
 
 export interface Disclosure {

@@ -10,9 +10,9 @@ import ChartControls from "@/components/chart/ChartControls";
 import MACDChart from "@/components/chart/MACDChart";
 import PriceChart from "@/components/chart/PriceChart";
 import RSIChart from "@/components/chart/RSIChart";
-import DisclosureList from "@/components/disclosure/DisclosureList";
 import Header from "@/components/layout/Header";
-import ReportList from "@/components/report/ReportList";
+import MarketIndicatorList from "@/components/market-indicator/MarketIndicatorList";
+import NewsList from "@/components/news/NewsList";
 import AIStockList from "@/components/stock/AIStockList";
 import StockCard from "@/components/stock/StockCard";
 import TradeHistoryPanel from "@/components/trade-history/TradeHistoryPanel";
@@ -60,7 +60,8 @@ export default function MainPage() {
             {/* 매매일지 버튼 */}
             <button
               onClick={() => setIsTradeHistoryOpen(true)}
-              className="w-full flex items-center justify-center gap-2 bg-[#141519] border border-[#26272c] hover:border-zinc-600 rounded-2xl py-3 text-sm font-medium text-zinc-300 transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-[#141519] border border-[#26272c] 
+                        hover:border-zinc-600 rounded-2xl py-3 text-sm font-medium text-zinc-300 transition-colors cursor-pointer"
             >
               <PenLine className="w-4 h-4" />
               매매일지 작성
@@ -68,12 +69,12 @@ export default function MainPage() {
           </div>
         </div>
 
-        {/* 하단 영역 (공시 + 리포트) */}
+        {/* 하단 영역 (시장지표 + 뉴스) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* 공시 리스트 */}
-          <DisclosureList />
-          {/* 리포트 리스트 */}
-          <ReportList won={won} />
+          {/* 시장지표 리스트 */}
+          <MarketIndicatorList />
+          {/* 뉴스 리스트 */}
+          <NewsList />
         </div>
       </div>
 

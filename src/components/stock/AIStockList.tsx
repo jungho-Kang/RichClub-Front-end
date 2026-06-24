@@ -3,6 +3,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import BlurText from "@/components/ui/BlurText";
 import axios from "axios";
 import type { AIStock } from "@/types/stock";
+import { useStockStore } from "@/stores/useStockStore";
 
 type TabType = "매수" | "매도";
 
@@ -11,8 +12,10 @@ interface AIStockListProps {
   pct: (n: number) => string;
 }
 
-const AIStockList = ({ won }: AIStockListProps) => {
+const AIStockList = ({ won, pct }: AIStockListProps) => {
   const { isLogin } = useAuthStore();
+  const { setSelectedStock } = useStockStore();
+
   const [tab, setTab] = useState<TabType>("매수");
   const [buyPredictions, setBuyPredictions] = useState<AIStock[] | null>(null);
   const [sellPredictions, setSellPredictions] = useState<AIStock[] | null>(
@@ -23,17 +26,18 @@ const AIStockList = ({ won }: AIStockListProps) => {
     // 매수, 매도 AI예측 데이터 가져오기
     const getChartData = async () => {
       try {
-        const buyRes = await axios.get("/api/v1/stock/ai/predictions", {
+        const buyRes = await axios.get("/api/v1/stock/ai/today", {
           params: {
             signal: "매수",
           },
         });
 
-        const sellRes = await axios.get("/api/v1/stock/ai/predictions", {
+        const sellRes = await axios.get("/api/v1/stock/ai/today", {
           params: {
             signal: "매도",
           },
         });
+
         setBuyPredictions(buyRes.data);
         setSellPredictions(sellRes.data);
       } catch (error) {
@@ -57,11 +61,11 @@ const AIStockList = ({ won }: AIStockListProps) => {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`text-xs px-2 py-1 rounded-md transition-colors ${
+              className={`text-xs px-2 py-1 rounded-md transition-all duration-150 cursor-pointer ${
                 tab === t
-                  ? "bg-white/10 text-white"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-zinc-500 hover:text-white hover:bg-white/5"
+              } active:scale-95`}
             >
               {t}
             </button>
@@ -75,7 +79,9 @@ const AIStockList = ({ won }: AIStockListProps) => {
           ? buyPredictions?.map((h, i) => (
               <div
                 key={`${h.stock_code}-${i}`}
-                className="pb-3 border-b border-[#23242a] last:border-0 last:pb-0"
+                onClick={() => setSelectedStock(h)}
+                className="pb-3 border-b border-[#23242a] last:border-0 last:pb-0 cursor-pointer
+                            transition-all duration-150 hover:bg-white/5 hover:rounded-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -106,13 +112,13 @@ const AIStockList = ({ won }: AIStockListProps) => {
                     <div className="text-sm font-semibold">
                       {won(h.current_price)}
                     </div>
-                    {/* <div
-                  className={`text-[11px] font-medium ${
-                    h.changePct >= 0 ? "text-emerald-400" : "text-rose-400"
-                  }`}
-                >
-                  {pct(h.changePct)}
-                </div> */}
+                    <div
+                      className={`text-[11px] font-medium ${
+                        h.change_pct >= 0 ? "text-emerald-400" : "text-rose-400"
+                      }`}
+                    >
+                      {h.change_pct && pct(h.change_pct)}
+                    </div>
                   </div>
                 </div>
 
@@ -126,7 +132,9 @@ const AIStockList = ({ won }: AIStockListProps) => {
           : sellPredictions?.map((h, i) => (
               <div
                 key={`${h.stock_code}-${i}`}
-                className="pb-3 border-b border-[#23242a] last:border-0 last:pb-0"
+                onClick={() => setSelectedStock(h)}
+                className="pb-3 border-b border-[#23242a] last:border-0 last:pb-0 cursor-pointer
+                            transition-all duration-150 hover:bg-white/5 hover:rounded-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -136,7 +144,7 @@ const AIStockList = ({ won }: AIStockListProps) => {
                       </BlurText>
 
                       <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        className={`min-w-8 text-[10px] px-1.5 py-0.5 rounded font-medium ${
                           h.signal === "매수"
                             ? "bg-emerald-500/15 text-emerald-400"
                             : h.signal === "매도"
@@ -157,13 +165,13 @@ const AIStockList = ({ won }: AIStockListProps) => {
                     <div className="text-sm font-semibold">
                       {won(h.current_price)}
                     </div>
-                    {/* <div
-                  className={`text-[11px] font-medium ${
-                    h.changePct >= 0 ? "text-emerald-400" : "text-rose-400"
-                  }`}
-                >
-                  {pct(h.changePct)}
-                </div> */}
+                    <div
+                      className={`text-[11px] font-medium ${
+                        h.change_pct >= 0 ? "text-emerald-400" : "text-rose-400"
+                      }`}
+                    >
+                      {h.change_pct && pct(h.change_pct)}
+                    </div>
                   </div>
                 </div>
 

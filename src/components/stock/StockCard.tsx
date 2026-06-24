@@ -42,7 +42,6 @@ const StockCard = ({ won, pct }: StockCardProps) => {
           stock_name: selectedStock.stock_name,
         },
       });
-      console.log(res.data);
 
       setData(res.data[0]);
     } catch (error) {
@@ -84,10 +83,10 @@ const StockCard = ({ won, pct }: StockCardProps) => {
           </span>
           <span
             className={`flex items-center gap-0.5 text-sm font-semibold ${
-              data.change_pct > 0 ? "text-emerald-400" : "text-rose-400"
+              data.change_pct >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {data.change_pct > 0 ? (
+            {data.change_pct >= 0 ? (
               <TrendingUp className="w-3.5 h-3.5" />
             ) : (
               <TrendingDown className="w-3.5 h-3.5" />
