@@ -9,11 +9,11 @@ RichClub은 AI 기반 주식 매매 보조 시스템입니다.
 
 ## 주요 기능
 
-* 주식 데이터 수집 및 MongoDB 저장
-* 기술적 지표 기반 데이터 전처리 (RSI, MACD 등)
-* 머신러닝 모델을 통한 매수 / 매도 / 관망 예측
-* 예측 결과 시각화 및 성능 분석
-* 직관적인 UI 기반 투자 정보 제공
+- 주식 데이터 수집 및 MongoDB 저장
+- 기술적 지표 기반 데이터 전처리 (RSI, MACD 등)
+- 머신러닝 모델을 통한 매수 / 매도 / 관망 예측
+- 예측 결과 시각화 및 성능 분석
+- 직관적인 UI 기반 투자 정보 제공
 
 ---
 
@@ -21,27 +21,27 @@ RichClub은 AI 기반 주식 매매 보조 시스템입니다.
 
 ### Frontend
 
-* React (Vite)
-* TypeScript
-* Tailwind CSS
+- React (Vite)
+- TypeScript
+- Tailwind CSS
 
 ### Backend
 
-* Java Spring (예정)
+- Python
 
 ### AI / Data
 
-* Python
-* XGBoost
-* Pandas, NumPy, Scikit-learn
+- Python
+- XGBoost
+- Pandas, NumPy, Scikit-learn
 
 ### Database
 
-* MongoDB Atlas
+- MongoDB Atlas
 
 ### Deployment
 
-* Vercel
+- Vercel
 
 ---
 
@@ -80,24 +80,25 @@ python predict.py
 
 ## 머신러닝 모델
 
-* 모델: XGBoost Classifier
-* 입력 데이터:
+- 모델: XGBoost Classifier
+- 입력 데이터:
 
-  * RSI (Relative Strength Index)
-  * MACD (Moving Average Convergence Divergence)
-  * 이동 평균선 (MA)
-  * 거래량 (Volume)
-* 출력:
+  - RSI (Relative Strength Index)
+  - MACD (Moving Average Convergence Divergence)
+  - 이동 평균선 (MA)
+  - 거래량 (Volume)
 
-  * Buy (매수)
-  * Sell (매도)
-  * Hold (관망)
+- 출력:
+
+  - Buy (매수)
+  - Sell (매도)
+  - Hold (관망)
 
 ---
 
 ## 향후 계획
 
-* 실시간 데이터 반영 주기 개선
-* 모델 성능 향상 (Feature Engineering 및 튜닝)
-* 사용자 맞춤형 투자 전략 추천
-* 모의 투자 기능 추가
+- 실시간 데이터 반영 주기 개선
+- 모델 성능 향상 (Feature Engineering 및 튜닝)
+- 사용자 맞춤형 투자 전략 추천
+- 모의 투자 기능 추가
