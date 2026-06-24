@@ -8,6 +8,7 @@ import { useModalStore } from "@/stores/useModalStore";
 import { getCookie, removeCookie } from "@/utils/cookie";
 
 import SearchBar from "@/components/ui/SearchBar";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   email: string;
@@ -15,9 +16,13 @@ interface User {
 }
 
 const Header = () => {
+  const navigate = useNavigate();
+
   const [user, setUser] = useState<User | null>(null);
+
   const { open, onChangeMode } = useModalStore();
   const { logout, login } = useAuthStore();
+
   const accessToken = getCookie("accessToken");
 
   const getUserInfo = async () => {
@@ -54,6 +59,7 @@ const Header = () => {
       login();
     } else {
       setUser(null);
+      navigate("/auth", { replace: true });
     }
   }, [accessToken]);
 
