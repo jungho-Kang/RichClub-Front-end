@@ -1,14 +1,13 @@
 import axios from "axios";
-import Swal from "sweetalert2";
 import { Activity } from "lucide-react";
 import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useModalStore } from "@/stores/useModalStore";
 import { getCookie, removeCookie } from "@/utils/cookie";
 
 import SearchBar from "@/components/ui/SearchBar";
-import { useNavigate } from "react-router-dom";
 
 interface User {
   email: string;
@@ -16,12 +15,10 @@ interface User {
 }
 
 const Header = () => {
-  const navigate = useNavigate();
-
   const [user, setUser] = useState<User | null>(null);
 
   const { open, onChangeMode } = useModalStore();
-  const { logout, login } = useAuthStore();
+  const { logout } = useAuthStore();
 
   const accessToken = getCookie("accessToken");
 
@@ -47,7 +44,6 @@ const Header = () => {
         confirmButtonColor: "#6F4CDB",
       });
       logout();
-      window.location.reload();
     } catch (error) {
       console.log(error);
     }
@@ -56,10 +52,8 @@ const Header = () => {
   useEffect(() => {
     if (accessToken) {
       getUserInfo();
-      login();
     } else {
       setUser(null);
-      navigate("/auth", { replace: true });
     }
   }, [accessToken]);
 
@@ -107,7 +101,7 @@ const Header = () => {
                 removeCookie("accessToken");
                 postLogout();
               }}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5 transition-all"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5 transition-all cursor-pointer"
             >
               로그아웃
             </button>

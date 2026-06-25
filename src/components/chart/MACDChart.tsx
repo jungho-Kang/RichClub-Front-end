@@ -1,19 +1,18 @@
+import axios from "axios";
 import {
   createChart,
   type IChartApi,
   type ISeriesApi,
 } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
-import axios from "axios";
+
+import type { MACDData } from "@/types/stock";
+
 import { useChartStore } from "@/stores/useChartStore";
 import { useStockStore } from "@/stores/useStockStore";
 
-interface MACDData {
-  date: string;
-  macd: number;
-  signal: number;
-  histogram: number;
-}
+import ChartTooltip from "@/components/ui/ChartTooltip";
+import { useTooltipStore } from "@/stores/useTooltipStore";
 
 const CHART_HEIGHT = 150;
 
@@ -26,6 +25,8 @@ const MACDChart = () => {
   const histSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
   const [data, setData] = useState<MACDData[]>([]);
+
+  const { tooltip, setTooltip } = useTooltipStore();
   const { selectedStock } = useStockStore();
   const {
     hoveredDate,
@@ -139,7 +140,7 @@ const MACDChart = () => {
 
     // ================= CROSSHAIR SYNC =================
     chart.subscribeCrosshairMove(param => {
-      if (!param.time) {
+      if (!param.time || !param.point) {
         setHoveredDate(null);
         return;
       }
@@ -164,16 +165,47 @@ const MACDChart = () => {
 
   // ================= HOVER SYNC =================
   useEffect(() => {
-    if (!chartInstance.current || !hoveredDate) return;
+    if (!chartInstance.current || !macdSeriesRef.current) return;
+
+    const chart = chartInstance.current;
+    const series = macdSeriesRef.current;
+
+    // 👇 hoveredDate 없을 때 처리
+    if (!hoveredDate) {
+      chart.clearCrosshairPosition();
+      setTooltip(null);
+      return;
+    }
 
     const target = data.find(d => d.date === hoveredDate);
     if (!target) return;
 
-    chartInstance.current.setCrosshairPosition(
-      target.macd,
-      hoveredDate as any,
-      macdSeriesRef.current!,
-    );
+    chart.setCrosshairPosition(target.macd, hoveredDate as any, series);
+
+    // 👇 좌표 계산 + tooltip 업데이트
+    const x = chart.timeScale().timeToCoordinate(hoveredDate as any);
+    const y = series.priceToCoordinate(target.macd);
+
+    if (x === null || y === null) return;
+
+    let badge: { text: string; color: "green" | "red" | "orange" } | undefined;
+    if (target.macd > target.signal) {
+      badge = { text: "MACD 위 (매수 우호)", color: "green" };
+    } else if (target.macd < target.signal) {
+      badge = { text: "시그널 위 (매도 우호)", color: "red" };
+    }
+
+    setTooltip({
+      macd: {
+        x,
+        y,
+        date: hoveredDate,
+        macd: Math.round(target.macd),
+        signal: Math.round(target.signal),
+        histogram: Math.round(target.histogram),
+        badge,
+      },
+    });
   }, [hoveredDate, data]);
 
   // 차트 줌 공유
@@ -184,12 +216,40 @@ const MACDChart = () => {
   }, [visibleRange]);
 
   return (
-    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4">
+    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 relative">
       <div className="flex justify-between mb-3">
         <h3 className="text-sm font-bold">MACD (12, 26, 9)</h3>
       </div>
 
       <div ref={chartRef} style={{ height: CHART_HEIGHT }} />
+
+      {tooltip?.macd && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: tooltip.macd.x + 10,
+            top: tooltip.macd.y + 10,
+            zIndex: 50,
+          }}
+        >
+          <ChartTooltip
+            title={tooltip.macd.date}
+            badge={tooltip.macd.badge}
+            items={[
+              {
+                label: "MACD",
+                value: tooltip.macd.macd,
+                color: "#a78bfa",
+              },
+              {
+                label: "Signal",
+                value: tooltip.macd.signal,
+                color: "#f59e0b",
+              },
+            ]}
+          />
+        </div>
+      )}
     </div>
   );
 };

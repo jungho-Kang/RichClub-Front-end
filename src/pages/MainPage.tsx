@@ -1,7 +1,10 @@
 import { PenLine } from "lucide-react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
+import { getCookie } from "@/utils/cookie";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useModalStore } from "@/stores/useModalStore";
 
 import Login from "@/components/auth/Login";
@@ -24,8 +27,23 @@ const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
 export default function MainPage() {
+  const navigate = useNavigate();
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
   const { close, isOpen, mode, onChangeMode } = useModalStore();
+  const { login } = useAuthStore();
+
+  const accessToken = getCookie("accessToken");
+
+  useEffect(() => {
+    if (accessToken) {
+      login();
+    } else {
+      navigate("/auth", { replace: true });
+    }
+  }, [accessToken]);
+
+  // accessToken이 없으면 화면 지우기
+  if (!accessToken) return;
 
   return (
     <div className="min-h-screen w-full bg-[#0a0a0b] text-zinc-100 font-sans p-4 lg:p-6">

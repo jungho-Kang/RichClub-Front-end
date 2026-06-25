@@ -1,38 +1,20 @@
+import axios from "axios";
 import {
   createChart,
   type IChartApi,
   type ISeriesApi,
 } from "lightweight-charts";
-import axios from "axios";
 import { useEffect, useRef, useState } from "react";
+
+import type { CandleData, SignalData } from "@/types/stock";
 
 import { useChartStore } from "@/stores/useChartStore";
 import { useStockStore } from "@/stores/useStockStore";
 import { getIchimokuSeriesData } from "@/utils/chartUtils";
+
+import ChartTooltip from "@/components/ui/ChartTooltip";
+import { useTooltipStore } from "@/stores/useTooltipStore";
 import PriceChartLegend from "./PriceChartLegend";
-
-interface CandleData {
-  close: number;
-  datetime: string;
-  high: number;
-  low: number;
-  ma5: number;
-  ma20: number;
-  ma60: number;
-  open: number;
-  volume: number;
-}
-
-interface SignalData {
-  stock_code: string;
-  stock_name: string;
-  current_price: number;
-  change_pct: number;
-  signal: "매수" | "매도" | "관망" | string;
-  signal_label: number;
-  confidence: number | null;
-  predicted_at: string;
-}
 
 const CHART_HEIGHT = 350;
 
@@ -47,6 +29,7 @@ const PriceChart = () => {
   // 시그널 데이터 state
   const [signalData, setSignalData] = useState<SignalData[]>([]);
 
+  const { tooltip, setTooltip } = useTooltipStore();
   const { selectedStock } = useStockStore();
   const {
     showMA5,
@@ -143,7 +126,7 @@ const PriceChart = () => {
     window.addEventListener("resize", updateActualWidth);
 
     chart.subscribeCrosshairMove(param => {
-      if (!param.time) {
+      if (!param.time || !param.point) {
         setHoveredDate(null);
         return;
       }
@@ -371,6 +354,7 @@ const PriceChart = () => {
 
     if (!hoveredDate) {
       chart.clearCrosshairPosition();
+      setTooltip(null);
       return;
     }
 
@@ -380,6 +364,40 @@ const PriceChart = () => {
     if (!target) return;
 
     chart.setCrosshairPosition(target.close, hoveredDate as any, series);
+
+    // 좌표 계산
+    const x = chart.timeScale().timeToCoordinate(hoveredDate as any);
+    const y = series.priceToCoordinate(target.close);
+
+    if (x === null || y === null) return;
+
+    // badge 계산
+    const ma5 = Number(target.ma5);
+    const ma20 = Number(target.ma20);
+    const ma60 = Number(target.ma60);
+
+    let badge: { text: string; color: "green" | "red" | "orange" } | undefined;
+    if (ma5 > ma20 && ma20 > ma60) {
+      badge = { text: "정배열", color: "green" };
+    } else if (ma5 < ma20 && ma20 < ma60) {
+      badge = { text: "역배열", color: "red" };
+    }
+
+    setTooltip({
+      price: {
+        x,
+        y,
+        date: hoveredDate,
+        open: Math.round(Number(target.open)),
+        high: Math.round(Number(target.high)),
+        low: Math.round(Number(target.low)),
+        close: Math.round(Number(target.close)),
+        ma5: Math.round(ma5),
+        ma20: Math.round(ma20),
+        ma60: Math.round(ma60),
+        badge,
+      },
+    });
   }, [hoveredDate, candleData]);
 
   return (
@@ -405,11 +423,73 @@ const PriceChart = () => {
           className="absolute inset-0 pointer-events-none"
           style={{ zIndex: 0 }}
         />
+
         <div
           ref={chartRef}
           className="absolute inset-0"
           style={{ zIndex: 1 }}
         />
+
+        {tooltip?.price && (
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              left: tooltip.price.x + 12,
+              top: tooltip.price.y + 12,
+              zIndex: 9999,
+            }}
+          >
+            <ChartTooltip
+              title={tooltip.price.date}
+              badge={tooltip.price.badge}
+              items={[
+                {
+                  label: "시가",
+                  value: tooltip.price.open,
+                },
+                {
+                  label: "고가",
+                  value: tooltip.price.high,
+                },
+                {
+                  label: "저가",
+                  value: tooltip.price.low,
+                },
+                {
+                  label: "종가",
+                  value: tooltip.price.close,
+                },
+
+                ...(showMA5 && tooltip.price.ma5 != null
+                  ? [
+                      {
+                        label: "MA5",
+                        value: tooltip.price.ma5,
+                      },
+                    ]
+                  : []),
+
+                ...(showMA20 && tooltip.price.ma20 != null
+                  ? [
+                      {
+                        label: "MA20",
+                        value: tooltip.price.ma20,
+                      },
+                    ]
+                  : []),
+
+                ...(showMA60 && tooltip.price.ma60 != null
+                  ? [
+                      {
+                        label: "MA60",
+                        value: tooltip.price.ma60,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

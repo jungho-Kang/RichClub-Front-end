@@ -34,7 +34,7 @@ const Login = () => {
 
       const res = await axios.post("/api/v1/auth/login", data);
       const accessToken = res.data.access_token;
-      setCookie("accessToken", accessToken);
+      setCookie("accessToken", accessToken, { hours: 1 });
 
       await Swal.fire({
         title: "로그인 성공",

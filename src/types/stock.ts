@@ -1,15 +1,3 @@
-export interface PricePoint {
-  date: string;
-  price: number;
-  ma5: number | null;
-  ma20: number | null;
-  ma60: number | null;
-  rsi: number | null;
-  macd: number;
-  signal: number;
-  histogram: number;
-}
-
 export interface AIStock {
   current_price: number;
   predicted_at: string;
@@ -22,24 +10,93 @@ export interface AIStock {
   signal_label?: number;
 }
 
-export interface Disclosure {
-  tag: string;
-  tone: "highlight" | "neutral" | "info";
-  title: string;
-  company: string;
-  time: string;
-}
-
-export interface Report {
-  rating: "매수" | "중립" | "매도";
-  title: string;
-  company: string;
-  broker: string;
-  time: string;
-  targetPrice: number;
-}
-
 export interface SelectedStockItem {
   stock_code: string;
   stock_name: string;
+}
+
+// ===== PriceChart interface =====
+export interface CandleData {
+  close: number;
+  datetime: string;
+  high: number;
+  low: number;
+  ma5: number;
+  ma20: number;
+  ma60: number;
+  open: number;
+  volume: number;
+}
+export interface SignalData {
+  stock_code: string;
+  stock_name: string;
+  current_price: number;
+  change_pct: number;
+  signal: "매수" | "매도" | "관망" | string;
+  signal_label: number;
+  confidence: number | null;
+  predicted_at: string;
+}
+export interface PriceChartTooltip {
+  x: number;
+  y: number;
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  ma5?: number;
+  ma20?: number;
+  ma60?: number;
+  badge?: {
+    text: string | null;
+    color: "green" | "red" | "orange";
+  };
+}
+
+// RSIChart interface
+export interface RSIData {
+  date: string;
+  rsi: number;
+  signal: number | null;
+  rsiBreakDown?: boolean;
+}
+export interface RSIChartTooltip {
+  x: number;
+  y: number;
+  date: string;
+  rsi: number;
+  signal: number;
+  badge?: {
+    text: string | null;
+    color: "green" | "red" | "orange";
+  };
+  rsiBreakText?: string;
+}
+
+// MACDChart interface
+export interface MACDData {
+  date: string;
+  macd: number;
+  signal: number;
+  histogram: number;
+}
+export interface MACDChartTooltip {
+  x: number;
+  y: number;
+  date: string;
+  macd: number;
+  signal: number;
+  histogram: number;
+  badge?: {
+    text: string | null;
+    color: "green" | "red" | "orange";
+  };
+}
+
+// Tooltip 통합 interface
+export interface TooltipState {
+  macd?: MACDChartTooltip;
+  rsi?: RSIChartTooltip;
+  price?: PriceChartTooltip;
 }
