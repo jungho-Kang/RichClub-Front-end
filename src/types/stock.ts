@@ -1,7 +1,9 @@
+import type { TradeType } from "./trade-history";
+
 export interface AIStock {
   current_price: number;
   predicted_at: string;
-  signal: "매수" | "매도" | "관망";
+  signal: TradeType;
   stock_code: string;
   stock_name: string;
   change_pct: number;
@@ -32,7 +34,7 @@ export interface SignalData {
   stock_name: string;
   current_price: number;
   change_pct: number;
-  signal: "매수" | "매도" | "관망" | string;
+  signal: TradeType;
   signal_label: number;
   confidence: number | null;
   predicted_at: string;

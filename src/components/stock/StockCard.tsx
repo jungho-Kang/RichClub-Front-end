@@ -1,14 +1,17 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { Star, TrendingDown, TrendingUp } from "lucide-react";
+
+import type { TradeType } from "@/types/trade-history";
+import { useStockStore } from "@/stores/useStockStore";
 
 import { BADGE } from "@/constants/tradeStyles";
-import { useStockStore } from "@/stores/useStockStore";
+import { useWatchlistStore } from "@/stores/useWatchlistStore";
 
 interface StockDetail {
   current_price: number;
   predicted_at: string;
-  signal: "매수" | "매도" | "관망";
+  signal: TradeType;
   stock_code: string;
   stock_name: string;
   change_pct: number;
@@ -62,6 +65,10 @@ const StockCard = ({ won, pct }: StockCardProps) => {
   const [featureImportance, setFeatureImportance] = useState<
     FeatureImportance[]
   >([]);
+  const [watchLoading, setWatchLoading] = useState(false);
+
+  const { isWatched, removeWatch, addWatch, getWatchlist } =
+    useWatchlistStore();
   const { selectedStock } = useStockStore();
 
   const getStockDetail = async () => {
@@ -91,7 +98,22 @@ const StockCard = ({ won, pct }: StockCardProps) => {
   useEffect(() => {
     getStockDetail();
     getSignalDetail();
+    getWatchlist();
   }, [selectedStock]);
+
+  const toggleWatch = async () => {
+    if (watchLoading || !data.stock_code) return;
+    setWatchLoading(true);
+    try {
+      if (isWatched(data.stock_code)) {
+        await removeWatch(data.stock_code);
+      } else {
+        await addWatch(data.stock_code, data.stock_name);
+      }
+    } finally {
+      setWatchLoading(false);
+    }
+  };
 
   // signal 분석 근거 Text
   const getFeatureText = (
@@ -160,22 +182,38 @@ const StockCard = ({ won, pct }: StockCardProps) => {
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
       {/* 상단 행 */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-base font-bold">{data.stock_name}</h2>
+        {/* 왼쪽: 종목명 + 코드 + 시그널 뱃지를 같은 블록으로 */}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold">{data.stock_name}</h2>
+            <span
+              className={`text-xs font-bold rounded-md px-2.5 py-1 ${BADGE[data.signal]}`}
+            >
+              {data.signal}
+            </span>
+          </div>
           <span className="text-[11px] text-zinc-500 font-mono">
             {data?.stock_code}
           </span>
         </div>
 
-        {/* AI 시그널 */}
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className="text-xs text-zinc-400 font-medium">AI 시그널</span>
-          <span
-            className={`text-xs font-bold rounded-md px-2.5 py-1 ${BADGE[data.signal]}`}
-          >
-            {data.signal}
-          </span>
-        </div>
+        <button
+          onClick={toggleWatch}
+          disabled={watchLoading || !data.stock_code}
+          className={`p-2 rounded-xl transition-all duration-150 cursor-pointer active:scale-90
+                      disabled:opacity-30 disabled:cursor-not-allowed
+                      ${
+                        isWatched(data.stock_code)
+                          ? "text-amber-400 bg-amber-400/10 hover:bg-amber-400/20"
+                          : "text-zinc-500 bg-white/5 hover:text-amber-400 hover:bg-amber-400/10"
+                      }`}
+          title={isWatched(data.stock_code) ? "관심종목 해제" : "관심종목 등록"}
+        >
+          <Star
+            className="w-4 h-4"
+            fill={isWatched(data.stock_code) ? "currentColor" : "none"}
+          />
+        </button>
       </div>
 
       {/* 하단 행 */}
