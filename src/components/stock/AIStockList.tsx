@@ -47,8 +47,10 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
     getChartData();
   }, []);
 
+  const list = tab === "매수" ? buyPredictions : sellPredictions;
+
   return (
-    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 flex flex-col min-h-260 h-full">
+    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 flex flex-col flex-1">
       {/* 헤더 + 탭 */}
       <div className="flex items-center justify-between mb-3">
         <div className="text-xs font-medium text-zinc-300 px-1">
@@ -75,113 +77,67 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
 
       {/* 리스트 */}
       <div className="space-y-3 overflow-y-auto max-h-240 pr-1 scrollbar-thumb-amber-50">
-        {tab === "매수"
-          ? buyPredictions?.map((h, i) => (
-              <div
-                key={`${h.stock_code}-${i}`}
-                onClick={() => setSelectedStock(h)}
-                className="pb-3 border-b border-[#23242a] last:border-0 last:pb-0 cursor-pointer
+        {list?.length ? (
+          list.map((h, i) => (
+            <div
+              key={`${h.stock_code}-${i}`}
+              onClick={() => setSelectedStock(h)}
+              className="pb-3 border-b border-[#23242a] last:border-0 last:pb-0 cursor-pointer
                             transition-all duration-150 hover:bg-white/5 hover:rounded-sm"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold flex items-center gap-1.5">
-                      <BlurText isLocked={!isLogin} className="truncate">
-                        {h.stock_name}
-                      </BlurText>
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold flex items-center gap-1.5">
+                    <BlurText isLocked={!isLogin} className="truncate">
+                      {h.stock_name}
+                    </BlurText>
 
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          h.signal === "매수"
-                            ? "bg-emerald-500/15 text-emerald-400"
-                            : h.signal === "매도"
-                              ? "bg-rose-500/15 text-rose-400"
-                              : "bg-zinc-700/40 text-zinc-400"
-                        }`}
-                      >
-                        {h.signal}
-                      </span>
-                    </div>
-
-                    <div className="text-[11px] text-zinc-500 font-mono">
-                      <BlurText isLocked={!isLogin}>{h.stock_code}</BlurText>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-semibold">
-                      {won(h.current_price)}
-                    </div>
-                    <div
-                      className={`text-[11px] font-medium ${
-                        h.change_pct >= 0 ? "text-emerald-400" : "text-rose-400"
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        h.signal === "매수"
+                          ? "bg-emerald-500/15 text-emerald-400"
+                          : h.signal === "매도"
+                            ? "bg-rose-500/15 text-rose-400"
+                            : "bg-zinc-700/40 text-zinc-400"
                       }`}
                     >
-                      {h.change_pct && pct(h.change_pct)}
-                    </div>
+                      {h.signal}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-zinc-500 font-mono">
+                    <BlurText isLocked={!isLogin}>{h.stock_code}</BlurText>
                   </div>
                 </div>
 
-                {h.confidence && (
-                  <div className="mt-1 text-[10px] text-zinc-500">
-                    AI 신뢰도 {h.confidence}%
+                <div className="text-right shrink-0">
+                  <div className="text-sm font-semibold">
+                    {won(h.current_price)}
                   </div>
-                )}
-              </div>
-            ))
-          : sellPredictions?.map((h, i) => (
-              <div
-                key={`${h.stock_code}-${i}`}
-                onClick={() => setSelectedStock(h)}
-                className="pb-3 border-b border-[#23242a] last:border-0 last:pb-0 cursor-pointer
-                            transition-all duration-150 hover:bg-white/5 hover:rounded-sm"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold flex items-center gap-1.5">
-                      <BlurText isLocked={!isLogin} className="truncate">
-                        {h.stock_name}
-                      </BlurText>
-
-                      <span
-                        className={`min-w-8 text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          h.signal === "매수"
-                            ? "bg-emerald-500/15 text-emerald-400"
-                            : h.signal === "매도"
-                              ? "bg-rose-500/15 text-rose-400"
-                              : "bg-zinc-700/40 text-zinc-400"
-                        }`}
-                      >
-                        {h.signal}
-                      </span>
-                    </div>
-
-                    <div className="text-[11px] text-zinc-500 font-mono">
-                      <BlurText isLocked={!isLogin}>{h.stock_code}</BlurText>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-semibold">
-                      {won(h.current_price)}
-                    </div>
-                    <div
-                      className={`text-[11px] font-medium ${
-                        h.change_pct >= 0 ? "text-emerald-400" : "text-rose-400"
-                      }`}
-                    >
-                      {h.change_pct && pct(h.change_pct)}
-                    </div>
+                  <div
+                    className={`text-[11px] font-medium ${
+                      h.change_pct >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}
+                  >
+                    {h.change_pct && pct(h.change_pct)}
                   </div>
                 </div>
-
-                {h.confidence && (
-                  <div className="mt-1 text-[10px] text-zinc-500">
-                    AI 신뢰도 {h.confidence}%
-                  </div>
-                )}
               </div>
-            ))}
+
+              {h.confidence && (
+                <div className="mt-1 text-[10px] text-zinc-500">
+                  AI 신뢰도 {h.confidence}%
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="py-6 border-b border-[#23242a] text-center text-zinc-500 text-sm">
+            {tab === "매수"
+              ? "매수 신호 데이터가 없습니다"
+              : "매도 신호 데이터가 없습니다"}
+          </div>
+        )}
       </div>
     </div>
   );

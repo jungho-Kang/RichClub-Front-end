@@ -57,6 +57,8 @@ const PriceChart = () => {
     hoveredDate,
     priceScaleWidth,
     setPriceScaleWidth,
+    visibleRange,
+    setVisibleRange,
   } = useChartStore();
 
   // ================= API =================
@@ -64,7 +66,7 @@ const PriceChart = () => {
     try {
       const res = await axios.get(
         `/api/v1/stock/chart/candle/${selectedStock.stock_code}`,
-        { params: { days: 180 } },
+        { params: { days: 0 } },
       );
       setCandleData(res.data.data);
     } catch (error) {
@@ -127,17 +129,17 @@ const PriceChart = () => {
     // Y축 실제 너비를 측정해서 Zustand 스토어에 보낼 함수
     const updateActualWidth = () => {
       if (!chartInstance.current) return;
-      // 라이브러리가 렌더링한 실제 right 축의 픽셀 너비를 가져옵니다.
+      // 라이브러리가 렌더링한 실제 right 축의 픽셀 너비 가져오기
       const actualWidth = chartInstance.current.priceScale("right").width();
       if (actualWidth > 0) {
         setPriceScaleWidth(actualWidth);
       }
     };
 
-    // 데이터가 세팅되고 차트가 그려진 직후(100ms 뒤) 실제 너비를 측정해 제보합니다.
+    // 데이터가 세팅되고 차트가 그려진 직후(100ms 뒤) 실제 너비를 측정
     const timer = setTimeout(updateActualWidth, 100);
 
-    // 브라우저 창 크기가 바뀔 때 주가 자릿수 레이아웃 변경에 대응합니다.
+    // 브라우저 창 크기가 바뀔 때 주가 자릿수 레이아웃 변경에 대응
     window.addEventListener("resize", updateActualWidth);
 
     chart.subscribeCrosshairMove(param => {
@@ -146,6 +148,12 @@ const PriceChart = () => {
         return;
       }
       setHoveredDate(param.time as string);
+    });
+
+    chart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+      if (!range) return;
+
+      setVisibleRange(range);
     });
 
     const overlay = overlayRef.current;
@@ -347,6 +355,13 @@ const PriceChart = () => {
       minimumWidth: priceScaleWidth,
     });
   }, [priceScaleWidth]);
+
+  // 차트 줌 상태 공유(확대/축소)
+  useEffect(() => {
+    if (!chartInstance.current || !visibleRange) return;
+
+    chartInstance.current.timeScale().setVisibleLogicalRange(visibleRange);
+  }, [visibleRange]);
 
   useEffect(() => {
     if (!chartInstance.current || !candleSeriesRef.current) return;

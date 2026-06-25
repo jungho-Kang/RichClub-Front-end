@@ -46,6 +46,17 @@ const InitData: StockDetail = {
   change_pct: 0,
 };
 
+// 지표 가중치
+const featureWeights: Record<Feature, number> = {
+  MACD: 100,
+  "종가/60일선 비율": 90,
+  "20/60일선 비율": 80,
+  "5/20일선 비율": 70,
+  RSI: 60,
+  "스토캐스틱 K": 50,
+  "스토캐스틱 D": 40,
+};
+
 const StockCard = ({ won, pct }: StockCardProps) => {
   const [data, setData] = useState<StockDetail>(InitData);
   const [featureImportance, setFeatureImportance] = useState<
@@ -60,7 +71,6 @@ const StockCard = ({ won, pct }: StockCardProps) => {
           stock_name: selectedStock.stock_name,
         },
       });
-
       setData(res.data[0]);
     } catch (error) {
       console.log(error);
@@ -72,7 +82,6 @@ const StockCard = ({ won, pct }: StockCardProps) => {
       const res = await axios.get(
         `/api/v1/stock/ai/detail/${selectedStock.stock_code}`,
       );
-      console.log(res.data.feature_importance);
       setFeatureImportance(res.data.feature_importance);
     } catch (error) {
       console.log(error);
@@ -84,24 +93,68 @@ const StockCard = ({ won, pct }: StockCardProps) => {
     getSignalDetail();
   }, [selectedStock]);
 
-  // ma 지표로 매수, 매도 시그널 추출
-  const targetFeatures = [
-    "5/20일선 비율",
-    "20/60일선 비율",
-    "종가/60일선 비율",
-  ];
+  // signal 분석 근거 Text
+  const getFeatureText = (
+    feature: Feature,
+    value: number,
+    direction: string,
+  ) => {
+    switch (feature) {
+      case "MACD":
+        return direction === "positive"
+          ? "MACD 상승 추세 확인"
+          : "MACD 하락 추세 확인";
 
-  const filtered = featureImportance.filter(item =>
-    targetFeatures.includes(item.feature),
-  );
+      case "종가/60일선 비율":
+        if (value >= 1.2) {
+          return "장기 추세 강세 유지";
+        }
 
-  const buySignals =
-    filtered.length === 3 && filtered.every(item => Number(item.value) >= 1);
-  const sellSignals =
-    filtered.length === 3 && filtered.every(item => Number(item.value) < 1);
+        if (value >= 1) {
+          return "장기 추세 우상향";
+        }
 
-  const buyText = "MA5/20/60 정배열로 상승 흐름 형성";
-  const sellText = "MA5/20/60 역배열로 하락 흐름 형성";
+        return "장기 추세 약세";
+
+      case "20/60일선 비율":
+        return value >= 1 ? "중장기 정배열 형성" : "중장기 역배열 형성";
+
+      case "5/20일선 비율":
+        return value >= 1 ? "단기 상승 흐름 우세" : "단기 하락 흐름 우세";
+
+      case "RSI":
+        if (value >= 70) {
+          return "RSI 과매수 구간";
+        }
+
+        if (value <= 30) {
+          return "RSI 과매도 구간";
+        }
+
+        return "RSI 중립 구간";
+
+      case "스토캐스틱 K":
+      case "스토캐스틱 D":
+        if (value >= 80) {
+          return "단기 과매수 신호";
+        }
+
+        if (value <= 20) {
+          return "단기 과매도 신호";
+        }
+
+        return "단기 모멘텀 유지";
+    }
+  };
+
+  // 최종 2개의 근거 추출
+  const reasonText = [...featureImportance]
+    .sort((a, b) => featureWeights[b.feature] - featureWeights[a.feature])
+    .slice(0, 2)
+    .map(item =>
+      getFeatureText(item.feature, Number(item.value), item.direction),
+    )
+    .join(" · ");
 
   return (
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
@@ -146,15 +199,12 @@ const StockCard = ({ won, pct }: StockCardProps) => {
         </div>
 
         {/* 근거 */}
-        {buySignals ||
-          (sellSignals && (
-            <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded-lg px-2.5 py-1.5">
-              <div className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
-              <span className="text-[11px] text-zinc-400">
-                {buySignals ? buyText : sellSignals ? sellText : null}
-              </span>
-            </div>
-          ))}
+        {reasonText && (
+          <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded-lg px-2.5 py-1.5">
+            <div className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
+            <span className="text-[11px] text-zinc-400">{reasonText}</span>
+          </div>
+        )}
       </div>
     </div>
   );

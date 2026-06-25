@@ -26,7 +26,13 @@ const RSIChart = () => {
 
   const [data, setData] = useState<RSIData[]>([]);
   const { selectedStock } = useStockStore();
-  const { hoveredDate, setHoveredDate, priceScaleWidth } = useChartStore();
+  const {
+    hoveredDate,
+    setHoveredDate,
+    priceScaleWidth,
+    visibleRange,
+    setVisibleRange,
+  } = useChartStore();
 
   const calcRSISignal = (data: number[], period: number) => {
     const result: (number | null)[] = [];
@@ -52,7 +58,7 @@ const RSIChart = () => {
       const res = await axios.get(
         `/api/v1/stock/chart/rsi/${selectedStock.stock_code}`,
         {
-          params: { period: "6m" },
+          params: { period: "all" },
         },
       );
       const data: RSIData[] = res.data.data;
@@ -164,7 +170,15 @@ const RSIChart = () => {
       setHoveredDate(param.time as string);
     });
 
-    chart.timeScale().fitContent();
+    chart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+      if (!range) return;
+
+      setVisibleRange(range);
+    });
+
+    if (!visibleRange) {
+      chart.timeScale().fitContent();
+    }
 
     return () => {
       chart.remove();
@@ -191,6 +205,13 @@ const RSIChart = () => {
     // 진짜 crosshair 이동 (점 찍힘)
     chart.setCrosshairPosition(target.rsi, hoveredDate as any, series);
   }, [hoveredDate, data]);
+
+  // 차트 줌 공유
+  useEffect(() => {
+    if (!chartInstance.current || !visibleRange) return;
+
+    chartInstance.current.timeScale().setVisibleLogicalRange(visibleRange);
+  }, [visibleRange]);
 
   return (
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4">

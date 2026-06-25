@@ -6,18 +6,20 @@ interface ChartState {
   showMA60: boolean;
   showIchimoku: boolean;
 
-  // 차트 관련 변수
+  // 3개의 차트 공유 state
   hoveredDate: string | null;
   priceScaleWidth: number;
+  visibleRange: any;
 
   toggleMA5: () => void;
   toggleMA20: () => void;
   toggleMA60: () => void;
   toggleIchimoku: () => void;
 
-  // 차트 관련 setter
+  // 3개의 차트 공유 setter
   setHoveredDate: (date: string | null) => void;
   setPriceScaleWidth: (width: number) => void;
+  setVisibleRange: (range: any) => void;
 }
 
 export const useChartStore = create<ChartState>(set => ({
@@ -28,6 +30,7 @@ export const useChartStore = create<ChartState>(set => ({
 
   hoveredDate: null,
   priceScaleWidth: 80, // 기본 최소 너비 설정
+  visibleRange: null,
 
   toggleMA5: () => set(state => ({ showMA5: !state.showMA5 })),
   toggleMA20: () => set(state => ({ showMA20: !state.showMA20 })),
@@ -40,4 +43,5 @@ export const useChartStore = create<ChartState>(set => ({
       // 더 넓은 너비가 들어왔을 때만 업데이트해서 무한 루프 방지 및 최대폭 유지
       priceScaleWidth: Math.max(state.priceScaleWidth, width),
     })),
+  setVisibleRange: range => set({ visibleRange: range }),
 }));

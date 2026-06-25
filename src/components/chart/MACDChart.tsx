@@ -27,7 +27,13 @@ const MACDChart = () => {
 
   const [data, setData] = useState<MACDData[]>([]);
   const { selectedStock } = useStockStore();
-  const { hoveredDate, setHoveredDate, priceScaleWidth } = useChartStore();
+  const {
+    hoveredDate,
+    setHoveredDate,
+    priceScaleWidth,
+    visibleRange,
+    setVisibleRange,
+  } = useChartStore();
 
   // ================= API =================
   const getMACDData = async () => {
@@ -35,7 +41,7 @@ const MACDChart = () => {
       const res = await axios.get(
         `/api/v1/stock/chart/macd/${selectedStock.stock_code}`,
         {
-          params: { period: "6m" },
+          params: { period: "all" },
         },
       );
 
@@ -141,7 +147,15 @@ const MACDChart = () => {
       setHoveredDate(param.time as string);
     });
 
-    chart.timeScale().fitContent();
+    chart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+      if (!range) return;
+
+      setVisibleRange(range);
+    });
+
+    if (!visibleRange) {
+      chart.timeScale().fitContent();
+    }
 
     return () => {
       chart.remove();
@@ -161,6 +175,13 @@ const MACDChart = () => {
       macdSeriesRef.current!,
     );
   }, [hoveredDate, data]);
+
+  // 차트 줌 공유
+  useEffect(() => {
+    if (!chartInstance.current || !visibleRange) return;
+
+    chartInstance.current.timeScale().setVisibleLogicalRange(visibleRange);
+  }, [visibleRange]);
 
   return (
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4">
