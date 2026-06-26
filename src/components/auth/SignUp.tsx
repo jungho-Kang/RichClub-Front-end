@@ -1,159 +1,475 @@
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import axios, { AxiosError } from "axios";
 import Swal from "sweetalert2";
-import * as yup from "yup";
 
-import { useModalStore } from "@/stores/useModalStore";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useForm } from "react-hook-form";
-
-interface SignUpForm {
-  name: string;
-  email: string;
-  password: string;
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const schema = yup.object({
-  name: yup
-    .string()
-    .min(2, "닉네임은 2자 이상 입력해주세요.")
-    .max(10, "닉네임은 10자 이하로 입력해주세요.")
-    .matches(
-      /^[가-힣a-zA-Z0-9_]+$/,
-      "한글, 영문, 숫자, 언더바(_)만 사용할 수 있습니다.",
-    )
-    .required("닉네임을 입력해주세요."),
-  email: yup
-    .string()
-    .email("올바른 이메일 형식이 아닙니다.")
-    .required("이메일을 입력해주세요."),
-  password: yup
-    .string()
-    .min(8, "비밀번호는 8자 이상 입력해주세요.")
-    .max(20, "비밀번호는 20자 이하로 입력해주세요.")
-    .matches(
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*]).+$/,
-      "영문, 숫자, 특수문자를 포함해야 합니다.",
-    )
-    .matches(/^\S+$/, "공백은 사용할 수 없습니다.")
-    .required("비밀번호를 입력해주세요."),
-});
+type Step = "email" | "code" | "info";
 
-const SignUp = () => {
-  const { close } = useModalStore();
+const swalBase = {
+  background: "#101319",
+  color: "#fff",
+  confirmButtonColor: "#6F4CDB",
+};
+
+const inputClass =
+  "w-full bg-[#0f1117] border border-[#2a2d36] rounded-lg px-4 py-3 " +
+  "text-sm text-white placeholder-gray-600 " +
+  "focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] " +
+  "transition-colors duration-150";
+
+const btnPrimary =
+  "w-full py-3 rounded-lg text-sm font-semibold text-white " +
+  "bg-[#7C5CFF] hover:bg-[#6a4de0] active:bg-[#5c40c9] " +
+  "transition-colors duration-150 " +
+  "disabled:opacity-50 disabled:cursor-not-allowed " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]";
+
+const TIMER_SECONDS = 5 * 60; // 5분
+
+function formatTime(sec: number) {
+  const m = String(Math.floor(sec / 60)).padStart(2, "0");
+  const s = String(sec % 60).padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+export default function SignUp({ isOpen, onClose }: Props) {
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [timer, setTimer] = useState(TIMER_SECONDS);
+  const [timerActive, setTimerActive] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const emailForm = useForm<{ email: string }>();
+  const codeForm = useForm<{ code: string }>();
+  const infoForm = useForm<{
+    name: string;
+    password: string;
+    confirmPassword: string;
+  }>();
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isValid },
-  } = useForm<SignUpForm>({
-    resolver: yupResolver(schema),
-    mode: "onChange",
+    formState: { errors: infoErrors, isSubmitting: infoSubmitting },
+  } = infoForm;
+
+  const emailValue = emailForm.watch("email");
+  const codeValue = codeForm.watch("code");
+  const nameValue = infoForm.watch("name");
+  const passwordValue = infoForm.watch("password");
+  const confirmPasswordValue = infoForm.watch("confirmPassword");
+
+  const isPasswordMatch =
+    !!confirmPasswordValue && passwordValue === confirmPasswordValue;
+  const isPasswordMismatch =
+    !!confirmPasswordValue && passwordValue !== confirmPasswordValue;
+
+  // 타이머
+  useEffect(() => {
+    if (timerActive) {
+      intervalRef.current = setInterval(() => {
+        setTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current!);
+            setTimerActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [timerActive]);
+
+  // 모달 닫힐 때 초기화
+  useEffect(() => {
+    if (!isOpen) {
+      setTimeout(() => {
+        // setStep("email");
+        setEmail("");
+        setTimer(TIMER_SECONDS);
+        setTimerActive(false);
+        emailForm.reset();
+        codeForm.reset();
+        infoForm.reset();
+      }, 200);
+    }
+  }, [isOpen]);
+
+  // ESC
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isOpen, step]);
+
+  if (!isOpen) return null;
+
+  // 인증 미완료 상태에서 닫기 시도 시 경고
+  async function handleClose() {
+    if (step === "code") {
+      const result = await Swal.fire({
+        title: "인증을 완료하지 않고 나가시겠습니까?",
+        text: "이 페이지를 나가시면 다음에 인증을 다시 시도해야 합니다.",
+        icon: "warning",
+        showCancelButton: true,
+        cancelButtonText: "취소",
+        confirmButtonText: "나가기",
+        cancelButtonColor: "#2a2d36",
+        ...swalBase,
+      });
+      if (result.isConfirmed) onClose();
+      return;
+    }
+    onClose();
+  }
+
+  async function sendCode(targetEmail: string) {
+    try {
+      await axios.post("/api/v1/auth/email/send-code", { email: targetEmail });
+    } catch (error) {
+      console.log(error);
+      await Swal.fire({
+        title: "발송 실패",
+        text: "가입되지 않은 이메일이거나 이미 사용 중인 이메일입니다.",
+        icon: "error",
+        ...swalBase,
+      });
+      throw error;
+    }
+  }
+
+  const onSubmitEmail = emailForm.handleSubmit(async data => {
+    try {
+      await sendCode(data.email);
+      setEmail(data.email);
+      setTimer(TIMER_SECONDS);
+      setTimerActive(true);
+      await Swal.fire({
+        title: "인증코드 발송 완료",
+        text: `${data.email}로 인증코드를 전송했습니다. 메일을 확인해 주세요.`,
+        icon: "success",
+        ...swalBase,
+      });
+      setStep("code");
+    } catch (error) {
+      console.log(error);
+    }
   });
 
-  const showError = (message: string) => {
-    return Swal.fire({
-      title: "회원가입 실패",
-      html: message,
-      icon: "error",
-      background: "#101319",
-      color: "#c0b7b7",
-      confirmButtonColor: "#6F4CDB",
-    });
-  };
-
-  const onSubmit = async (data: SignUpForm) => {
+  async function handleResend() {
     try {
-      await axios.post("/api/v1/auth/signup", data);
-      Swal.fire({
-        title: "회원가입 성공",
-        html: "가입이 정상적으로 처리되었습니다",
+      await sendCode(email);
+      setTimer(TIMER_SECONDS);
+      setTimerActive(true);
+      await Swal.fire({
+        title: "재전송 완료",
+        text: "인증코드를 다시 전송했습니다.",
         icon: "success",
-        background: "#101319",
-        color: "#c0b7b7",
-        confirmButtonColor: "#6F4CDB",
-      }).then(result => {
-        if (result.isConfirmed) {
-          close();
-        }
+        ...swalBase,
       });
-    } catch (error: unknown) {
-      const err = error as AxiosError<any>;
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
+  const onSubmitCode = codeForm.handleSubmit(async data => {
+    try {
+      await axios.post("/api/v1/auth/email/verify-code", {
+        email,
+        code: data.code,
+      });
+      setTimerActive(false);
+      setStep("info");
+    } catch (error) {
+      console.log(error);
+      await Swal.fire({
+        title: "인증 실패",
+        text: "인증코드가 올바르지 않습니다.",
+        icon: "error",
+        ...swalBase,
+      });
+    }
+  });
+
+  const onSubmitInfo = infoForm.handleSubmit(async data => {
+    try {
+      await axios.post("/api/v1/auth/signup", {
+        email,
+        name: data.name,
+        password: data.password,
+      });
+      await Swal.fire({
+        title: "회원가입 성공",
+        text: "가입이 정상적으로 처리되었습니다.",
+        icon: "success",
+        ...swalBase,
+      });
+      onClose();
+    } catch (error) {
+      console.log(error);
+      const err = error as AxiosError;
       const message =
         err.response?.status === 409
           ? "이미 사용 중인 이메일입니다."
-          : "입력 정보를 다시 확인해주세요.";
-
-      await showError(message);
+          : "회원가입에 실패했습니다. 다시 시도해 주세요.";
+      await Swal.fire({
+        title: "회원가입 실패",
+        text: message,
+        icon: "error",
+        ...swalBase,
+      });
     }
+  });
+
+  const titleMap: Record<Step, string> = {
+    email: "이메일로 회원가입",
+    code: "이메일 인증요청",
+    info: "비밀번호 설정",
   };
 
   return (
-    <div>
-      <div className="space-y-5">
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          {/* 닉네임 */}
-          <div>
-            <label className="text-sm text-gray-300">닉네임</label>
-            <input
-              type="text"
-              placeholder="사용할 닉네임"
-              {...register("name")}
-              className="mt-1 w-full px-4 py-2 rounded-lg bg-[#101319] border border-[#262B36] text-white focus:outline-none focus:border-[#6F4CDB] focus:ring-1 focus:ring-[#6F4CDB]"
-            />
-            {errors.name && (
-              <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>
-            )}
-          </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      onClick={handleClose}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-          {/* 이메일 */}
-          <div>
-            <label className="text-sm text-gray-300">이메일</label>
-            <input
-              type="email"
-              placeholder="example@email.com"
-              {...register("email")}
-              className="mt-1 w-full px-4 py-2 rounded-lg bg-[#101319] border border-[#262B36] text-white focus:outline-none focus:border-[#6F4CDB] focus:ring-1 focus:ring-[#6F4CDB]"
-            />
-            {errors.email && (
-              <p className="text-xs text-red-400 mt-1">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
-
-          {/* 비밀번호 */}
-          <div>
-            <label className="text-sm text-gray-300">비밀번호</label>
-            <input
-              type="password"
-              placeholder="8자 이상 입력"
-              {...register("password")}
-              className="mt-1 w-full px-4 py-2 rounded-lg bg-[#101319] border border-[#262B36] text-white focus:outline-none focus:border-[#6F4CDB] focus:ring-1 focus:ring-[#6F4CDB]"
-            />
-            {errors.password && (
-              <p className="text-xs text-red-400 mt-1">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {/* 버튼 */}
+      <div
+        className="relative w-full max-w-90 bg-[#141519] border border-[#2a2d36]
+                   rounded-2xl shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2d36]">
+          <div className="w-7" />
+          <span className="text-[14px] font-semibold text-white">
+            {titleMap[step]}
+          </span>
           <button
-            type="submit"
-            disabled={!isValid || isSubmitting}
-            className="w-full py-3 rounded-lg bg-[#6F4CDB] hover:bg-[#5C3CCF] text-white font-semibold disabled:opacity-50 transition"
+            type="button"
+            onClick={handleClose}
+            aria-label="닫기"
+            className="w-7 h-7 flex items-center justify-center text-gray-500
+                       hover:text-white transition-colors rounded-sm
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]"
           >
-            {isSubmitting ? "가입 중..." : "회원가입"}
+            ✕
           </button>
+        </div>
 
-          <p className="text-xs text-gray-400 text-center">
-            가입 후 이메일 인증이 필요합니다.
-          </p>
-        </form>
+        <div className="px-6 py-6 flex flex-col gap-5">
+          {/* 1단계: 이메일 */}
+          {step === "email" && (
+            <form onSubmit={onSubmitEmail} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">이메일</label>
+                <input
+                  type="email"
+                  autoFocus
+                  placeholder="이메일을 입력해 주세요"
+                  {...emailForm.register("email", { required: true })}
+                  className={inputClass}
+                  autoComplete="email"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={emailForm.formState.isSubmitting || !emailValue}
+                className={btnPrimary}
+              >
+                {emailForm.formState.isSubmitting
+                  ? "전송 중…"
+                  : "이메일 인증 요청"}
+              </button>
+            </form>
+          )}
+
+          {/* 2단계: 인증코드 */}
+          {step === "code" && (
+            <form onSubmit={onSubmitCode} className="flex flex-col gap-4">
+              {/* 인증할 이메일 */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">
+                  인증할 이메일
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={email}
+                    readOnly
+                    className={`${inputClass} flex-1 cursor-default`}
+                  />
+                  {/* 이메일 수정 버튼 */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTimerActive(false);
+                      setStep("email");
+                      codeForm.reset();
+                    }}
+                    className="text-gray-400 hover:text-white transition-colors shrink-0
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF] rounded-sm"
+                    aria-label="이메일 수정"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              </div>
+
+              {/* 인증코드 */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[13px] text-gray-400">인증코드</label>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    className="text-[12px] text-[#9B7BFF] underline underline-offset-2
+                               hover:text-[#B794F4] transition-colors
+                               focus-visible:outline-none focus-visible:ring-2
+                               focus-visible:ring-[#7C5CFF] rounded-sm"
+                  >
+                    재전송
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="이메일로 전송된 6자리 인증코드를 입력해 주세요."
+                    {...codeForm.register("code", { required: true })}
+                    disabled={timer === 0}
+                    className={`${inputClass} pr-16 ${timer === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    maxLength={6}
+                  />
+                  {/* 타이머 */}
+                  <span
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 text-[12px] tabular-nums
+                                    ${timer === 0 ? "text-red-400" : "text-gray-500"}`}
+                  >
+                    ⏱ {formatTime(timer)}
+                  </span>
+                </div>
+                {timer === 0 && (
+                  <p className="text-[12px] text-red-400">
+                    인증 시간이 만료되었습니다. 재전송 버튼을 눌러주세요.
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={
+                  codeForm.formState.isSubmitting || !codeValue || timer === 0
+                }
+                className={btnPrimary}
+              >
+                {codeForm.formState.isSubmitting
+                  ? "확인 중…"
+                  : "인증 후 다음단계"}
+              </button>
+            </form>
+          )}
+
+          {/* 3단계: 닉네임 + 비밀번호 */}
+          {step === "info" && (
+            <form onSubmit={onSubmitInfo} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">닉네임</label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="사용할 닉네임"
+                  {...infoForm.register("name", {
+                    required: "닉네임을 입력해주세요.",
+                    minLength: {
+                      value: 2,
+                      message: "닉네임은 2자 이상 입력해주세요.",
+                    },
+                  })}
+                  className={inputClass}
+                />
+                {infoErrors.name && (
+                  <p className="text-[12px] text-red-400 mt-0.5">
+                    {infoErrors.name.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">비밀번호</label>
+                <input
+                  type="password"
+                  placeholder="8 ~ 16자 이내 입력"
+                  {...infoForm.register("password", {
+                    required: true,
+                    minLength: {
+                      value: 8,
+                      message: "비밀번호는 8자 이상 입력해주세요.",
+                    },
+                    maxLength: {
+                      value: 16,
+                      message: "비밀번호는 16자 이하로 입력해주세요.",
+                    },
+                    onChange: () => {
+                      if (infoForm.getValues("confirmPassword")) {
+                        infoForm.trigger("confirmPassword");
+                      }
+                    },
+                  })}
+                  className={`${inputClass} ${infoErrors.password ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                  autoComplete="new-password"
+                />
+                {infoErrors.password && (
+                  <p className="text-[12px] text-red-400 mt-0.5">
+                    {infoErrors.password.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">
+                  비밀번호 확인
+                </label>
+                <input
+                  type="password"
+                  placeholder="8 ~ 16자 이내 입력"
+                  {...infoForm.register("confirmPassword", { required: true })}
+                  className={`${inputClass} ${isPasswordMismatch ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                  autoComplete="new-password"
+                />
+                {isPasswordMismatch && (
+                  <p className="text-[12px] text-red-400 mt-0.5">
+                    비밀번호가 일치하지 않습니다.
+                  </p>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={
+                  infoSubmitting ||
+                  !nameValue ||
+                  !passwordValue ||
+                  !confirmPasswordValue ||
+                  !isPasswordMatch ||
+                  !!infoErrors.password
+                }
+                className={btnPrimary}
+              >
+                {infoSubmitting ? "가입 중…" : "확인"}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
-};
-
-export default SignUp;
+}

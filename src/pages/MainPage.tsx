@@ -3,12 +3,9 @@ import { PenLine } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { getCookie } from "@/utils/cookie";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useModalStore } from "@/stores/useModalStore";
+import { getCookie } from "@/utils/cookie";
 
-import Login from "@/components/auth/Login";
-import SignUp from "@/components/auth/SignUp";
 import ChartControls from "@/components/chart/ChartControls";
 import MACDChart from "@/components/chart/MACDChart";
 import PriceChart from "@/components/chart/PriceChart";
@@ -18,8 +15,8 @@ import MarketIndicatorList from "@/components/market-indicator/MarketIndicatorLi
 import NewsList from "@/components/news/NewsList";
 import AIStockList from "@/components/stock/AIStockList";
 import StockCard from "@/components/stock/StockCard";
+import WinrateTest from "@/components/stock/WinrateTest";
 import TradeHistoryPanel from "@/components/trade-history/TradeHistoryPanel";
-import Modal from "@/components/ui/Modal";
 
 // 원화 포맷
 const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
@@ -29,7 +26,6 @@ const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 export default function MainPage() {
   const navigate = useNavigate();
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
-  const { close, isOpen, mode, onChangeMode } = useModalStore();
   const { login } = useAuthStore();
 
   const accessToken = getCookie("accessToken");
@@ -74,7 +70,7 @@ export default function MainPage() {
           <div className="flex flex-col gap-4 min-w-0 h-full">
             {/* AI 예측 종목 리스트 */}
             <AIStockList won={won} pct={pct} />
-
+            <WinrateTest />
             {/* 매매일지 버튼 */}
             <button
               onClick={() => setIsTradeHistoryOpen(true)}
@@ -95,16 +91,6 @@ export default function MainPage() {
           <NewsList />
         </div>
       </div>
-
-      <Modal
-        mode={mode}
-        onChangeMode={onChangeMode}
-        open={isOpen}
-        onClose={close}
-        title="로그인 또는 회원가입으로 시작하세요"
-      >
-        {mode === "login" ? <Login /> : <SignUp />}
-      </Modal>
 
       {/* 매매일지 */}
       <TradeHistoryPanel

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useModalStore } from "@/stores/useModalStore";
 import { getCookie, removeCookie } from "@/utils/cookie";
 
 import SearchBar from "@/components/ui/SearchBar";
@@ -17,7 +16,6 @@ interface User {
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
 
-  const { open, onChangeMode } = useModalStore();
   const { logout } = useAuthStore();
 
   const accessToken = getCookie("accessToken");
@@ -80,43 +78,29 @@ const Header = () => {
       {/* 검색바 추가 */}
       <SearchBar />
 
-      <div>
-        {accessToken ? (
-          <div className="flex items-center gap-4">
-            {/* 사용자 정보 */}
-            <div className="flex items-center gap-3">
-              <div className="text-right leading-tight">
-                <div className="text-xs text-zinc-200 font-medium">
-                  {user?.name}
-                </div>
-                <div className="text-[10px] text-zinc-500">{user?.email}</div>
-              </div>
-
-              <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#7C5CFF] to-[#B794F4]" />
+      <div className="flex items-center gap-4">
+        {/* 사용자 정보 */}
+        <div className="flex items-center gap-3">
+          <div className="text-right leading-tight">
+            <div className="text-xs text-zinc-200 font-medium">
+              {user?.name}
             </div>
-
-            {/* 버튼 */}
-            <button
-              onClick={() => {
-                removeCookie("accessToken");
-                postLogout();
-              }}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5 transition-all cursor-pointer"
-            >
-              로그아웃
-            </button>
+            <div className="text-[10px] text-zinc-500">{user?.email}</div>
           </div>
-        ) : (
-          <button
-            onClick={() => {
-              open();
-              onChangeMode("login");
-            }}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white text-black hover:bg-zinc-200 active:scale-[0.98] transition-all"
-          >
-            로그인
-          </button>
-        )}
+
+          <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#7C5CFF] to-[#B794F4]" />
+        </div>
+
+        {/* 버튼 */}
+        <button
+          onClick={() => {
+            removeCookie("accessToken");
+            postLogout();
+          }}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5 transition-all cursor-pointer"
+        >
+          로그아웃
+        </button>
       </div>
     </header>
   );

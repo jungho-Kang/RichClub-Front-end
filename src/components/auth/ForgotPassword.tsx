@@ -1,0 +1,337 @@
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+type Step = "email" | "code" | "password";
+
+const swalBase = {
+  background: "#101319",
+  color: "#fff",
+  confirmButtonColor: "#6F4CDB",
+};
+
+const inputClass =
+  "w-full bg-[#0f1117] border border-[#2a2d36] rounded-lg px-4 py-3 " +
+  "text-sm text-white placeholder-gray-600 " +
+  "focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] " +
+  "transition-colors duration-150";
+
+const btnPrimary =
+  "w-full py-3 rounded-lg text-sm font-semibold text-white " +
+  "bg-[#7C5CFF] hover:bg-[#6a4de0] active:bg-[#5c40c9] " +
+  "transition-colors duration-150 " +
+  "disabled:opacity-50 disabled:cursor-not-allowed " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]";
+
+export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+
+  const emailForm = useForm<{ email: string }>();
+  const codeForm = useForm<{ code: string }>();
+  const passwordForm = useForm<{
+    newPassword: string;
+    confirmPassword: string;
+  }>();
+
+  const {
+    formState: { errors: pwErrors, isSubmitting: pwSubmitting },
+  } = passwordForm;
+
+  const emailValue = emailForm.watch("email");
+  const codeValue = codeForm.watch("code");
+  const newPasswordValue = passwordForm.watch("newPassword");
+  const confirmPasswordValue = passwordForm.watch("confirmPassword");
+
+  const isPasswordMatch =
+    !!confirmPasswordValue && newPasswordValue === confirmPasswordValue;
+  const isPasswordMismatch =
+    !!confirmPasswordValue && newPasswordValue !== confirmPasswordValue;
+
+  // 폼 초기화
+  useEffect(() => {
+    if (!isOpen) {
+      setTimeout(() => {
+        setStep("email");
+        setEmail("");
+        emailForm.reset();
+        codeForm.reset();
+        passwordForm.reset();
+      }, 200);
+    }
+  }, [isOpen]);
+
+  // Esc로 모달창 끄기
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const titleMap: Record<Step, string> = {
+    email: "비밀번호 찾기",
+    code: "비밀번호 찾기",
+    password: "비밀번호 변경",
+  };
+
+  // 인증코드 발송
+  const sendCode = async (email: string) => {
+    try {
+      await axios.post("/api/v1/auth/email/send-code", { email });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onSubmitEmail = emailForm.handleSubmit(async data => {
+    try {
+      await sendCode(data.email);
+      setEmail(data.email);
+      await Swal.fire({
+        title: "인증코드 발송 완료",
+        text: `${data.email}로 인증코드를 전송했습니다. 메일을 확인해 주세요.`,
+        icon: "success",
+        ...swalBase,
+      });
+      setStep("code");
+    } catch (error) {
+      console.log(error);
+      await Swal.fire({
+        title: "발송 실패",
+        text: "가입되지 않은 이메일입니다.",
+        icon: "error",
+        ...swalBase,
+      });
+    }
+  });
+
+  const handleResend = async () => {
+    try {
+      await sendCode(email);
+      await Swal.fire({
+        title: "재전송 완료",
+        text: "인증코드를 다시 전송했습니다.",
+        icon: "success",
+        ...swalBase,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onSubmitCode = codeForm.handleSubmit(async data => {
+    try {
+      await axios.post("/api/v1/auth/password/verify", {
+        email,
+        code: data.code,
+      });
+      setStep("password");
+    } catch (error) {
+      console.log(error);
+      await Swal.fire({
+        title: "인증 실패",
+        text: "인증코드가 올바르지 않습니다.",
+        icon: "error",
+        ...swalBase,
+      });
+    }
+  });
+
+  const onSubmitPassword = passwordForm.handleSubmit(async data => {
+    try {
+      await axios.post("/api/v1/auth/password/reset", {
+        email,
+        code: codeForm.getValues("code"),
+        new_password: data.newPassword,
+      });
+      await Swal.fire({
+        title: "비밀번호 변경 완료",
+        text: "비밀번호가 성공적으로 변경되었습니다.",
+        icon: "success",
+        ...swalBase,
+      });
+      onClose();
+    } catch (error) {
+      console.log(error);
+      await Swal.fire({
+        title: "변경 실패",
+        text: "비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.",
+        icon: "error",
+        ...swalBase,
+      });
+    }
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      <div
+        className="relative w-full max-w-90 bg-[#141519] border border-[#2a2d36]
+                   rounded-2xl shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2d36]">
+          <div className="w-7" />
+          <span className="text-[14px] font-semibold text-white">
+            {titleMap[step]}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            className="w-7 h-7 flex items-center justify-center text-gray-500
+                       hover:text-white transition-colors rounded-sm
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="px-6 py-6 flex flex-col gap-5">
+          {/* 1단계: 이메일 */}
+          {step === "email" && (
+            <form onSubmit={onSubmitEmail} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">이메일</label>
+                <input
+                  type="email"
+                  autoFocus
+                  placeholder="example@email.com"
+                  {...emailForm.register("email", { required: true })}
+                  className={inputClass}
+                  autoComplete="email"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={emailForm.formState.isSubmitting || !emailValue}
+                className={btnPrimary}
+              >
+                {emailForm.formState.isSubmitting
+                  ? "전송 중…"
+                  : "인증코드 발송"}
+              </button>
+            </form>
+          )}
+
+          {/* 2단계: 인증코드 */}
+          {step === "code" && (
+            <form onSubmit={onSubmitCode} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[13px] text-gray-400">인증코드</label>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    className="text-[12px] text-[#9B7BFF] underline underline-offset-2
+                               hover:text-[#B794F4] transition-colors
+                               focus-visible:outline-none focus-visible:ring-2
+                               focus-visible:ring-[#7C5CFF] rounded-sm"
+                  >
+                    재전송
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="코드 6자리 입력"
+                  {...codeForm.register("code", { required: true })}
+                  className={inputClass}
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  maxLength={6}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={codeForm.formState.isSubmitting || !codeValue}
+                className={btnPrimary}
+              >
+                {codeForm.formState.isSubmitting ? "확인 중…" : "확인"}
+              </button>
+            </form>
+          )}
+
+          {/* 3단계: 비밀번호 변경 */}
+          {step === "password" && (
+            <form onSubmit={onSubmitPassword} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">새 비밀번호</label>
+                <input
+                  type="password"
+                  autoFocus
+                  placeholder="8 ~ 16자 이내 입력"
+                  {...passwordForm.register("newPassword", {
+                    required: true,
+                    minLength: {
+                      value: 8,
+                      message: "비밀번호는 8자 이상 입력해주세요.",
+                    },
+                    maxLength: {
+                      value: 16,
+                      message: "비밀번호는 16자 이하로 입력해주세요.",
+                    },
+                  })}
+                  className={`${inputClass} ${pwErrors.newPassword ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                  autoComplete="new-password"
+                />
+                {pwErrors.newPassword && (
+                  <p className="text-[12px] text-red-400 mt-0.5">
+                    {pwErrors.newPassword.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] text-gray-400">
+                  비밀번호 확인
+                </label>
+                <input
+                  type="password"
+                  placeholder="8 ~ 16자 이내 입력"
+                  {...passwordForm.register("confirmPassword", {
+                    required: true,
+                  })}
+                  className={`${inputClass} ${isPasswordMismatch ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                  autoComplete="new-password"
+                />
+                {isPasswordMismatch && (
+                  <p className="text-[12px] text-red-400 mt-0.5">
+                    비밀번호가 일치하지 않습니다.
+                  </p>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={
+                  pwSubmitting ||
+                  !newPasswordValue ||
+                  !confirmPasswordValue ||
+                  !isPasswordMatch
+                }
+                className={btnPrimary}
+              >
+                {pwSubmitting ? "처리 중…" : "변경"}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
