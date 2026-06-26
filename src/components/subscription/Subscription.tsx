@@ -1,6 +1,6 @@
+import { alertError, alertSuccess } from "@/lib/swal";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { alertSuccess, alertError, alertDanger } from "@/lib/swal";
 
 interface SubscriptionProps {
   isOpen: boolean;
@@ -18,7 +18,7 @@ interface Plan {
   features: string[];
   unavailable?: string[];
   badge?: { text: string; color: string };
-  highlight?: string; // border color
+  highlight?: string;
 }
 
 const PLANS: Plan[] = [
@@ -119,14 +119,6 @@ const BADGE_GRADIENTS: Record<string, { from: string; to: string }> = {
   추천: { from: "#06b6d4", to: "#7C5CFF" },
 };
 
-const PLAN_LABELS: Record<string, string> = {
-  "basic-plan": "무료",
-  "ju-model": "Basic",
-  "seo-model": "Pro",
-  "auto-trade": "Max",
-  telegram: "텔레그램",
-};
-
 const fmt = (n: number) => n.toLocaleString("ko-KR");
 
 export default function Subscription({
@@ -165,6 +157,7 @@ export default function Subscription({
   const getPrice = (base: number) =>
     cycle === "yearly" ? Math.round(base * 0.8) : base;
 
+  // 구독 변경
   const handleSubscribe = async (planId: string) => {
     if (loading) return;
     setLoading(true);
@@ -173,6 +166,7 @@ export default function Subscription({
       await fetchSubscription();
       onSuccess?.();
       await alertSuccess("구독 완료", "플랜이 성공적으로 변경되었습니다.");
+      onClose();
     } catch {
       await alertError("구독 실패", "잠시 후 다시 시도해주세요.");
     } finally {
@@ -180,25 +174,26 @@ export default function Subscription({
     }
   };
 
-  const handleCancel = async () => {
-    const result = await alertDanger(
-      "구독을 해지하시겠어요?",
-      "기본 플랜으로 변경됩니다.",
-      "해지",
-    );
-    if (!result.isConfirmed) return;
-    setLoading(true);
-    try {
-      await axios.delete("/api/v1/subscription");
-      await fetchSubscription();
-      onSuccess?.();
-      await alertSuccess("구독 해지 완료", "기본 플랜으로 변경되었습니다.");
-    } catch {
-      await alertError("해지 실패", "잠시 후 다시 시도해주세요.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 구독 해지 기능인데 구독 변경 기능으로 해도 작동됨 [ handleSubscribe("basic-plan")과 동일한 기능 ]
+  //   const handleCancel = async () => {
+  //     const result = await alertDanger(
+  //       "구독을 해지하시겠어요?",
+  //       "기본 플랜으로 변경됩니다.",
+  //       "해지",
+  //     );
+  //     if (!result.isConfirmed) return;
+  //     setLoading(true);
+  //     try {
+  //       await axios.delete("/api/v1/subscription");
+  //       await fetchSubscription();
+  //       onSuccess?.();
+  //       await alertSuccess("구독 해지 완료", "기본 플랜으로 변경되었습니다.");
+  //     } catch {
+  //       await alertError("해지 실패", "잠시 후 다시 시도해주세요.");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
   return (
     <div
@@ -208,7 +203,7 @@ export default function Subscription({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       <div
-        className="relative w-full max-w-6xl bg-[#0f1117] border border-[#2a2d36] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-6xl bg-[#0f1117] border border-[#2a2d36] rounded-2xl shadow-2xl flex flex-col justify-between h-[95vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -223,18 +218,14 @@ export default function Subscription({
         </div>
 
         {/* 월간/연간 토글 */}
-        <div className="flex items-center gap-3 px-8 pt-5 pb-4 shrink-0">
+        <div className="flex items-center gap-3 px-8 pt-5 pb-2 shrink-0">
           <div className="flex bg-[#1a1d24] border border-[#2a2d36] rounded-lg p-0.5">
             {(["monthly", "yearly"] as BillingCycle[]).map(c => (
               <button
                 key={c}
                 onClick={() => setCycle(c)}
                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer
-                  ${
-                    cycle === c
-                      ? "bg-[#2a2d36] text-white"
-                      : "text-zinc-500 hover:text-zinc-300"
-                  }`}
+                  ${cycle === c ? "bg-[#2a2d36] text-white" : "text-zinc-500 hover:text-zinc-300"}`}
               >
                 {c === "monthly" ? "월간" : "연간"}
               </button>
@@ -251,8 +242,10 @@ export default function Subscription({
         </div>
 
         {/* 플랜 카드 */}
-        <div className="overflow-x-hidden px-8 pb-6">
-          <div className="flex gap-3 min-w-max">
+        <div className="overflow-x-auto px-8 pb-6 pt-3">
+          {" "}
+          {/* ← hidden → auto */}
+          <div className="flex gap-3">
             {PLANS.map(plan => {
               const isCurrent = currentPlan === plan.id;
               const price = getPrice(plan.monthlyPrice);
@@ -266,7 +259,7 @@ export default function Subscription({
                       ? { borderColor: isCurrent ? plan.highlight : undefined }
                       : {}
                   }
-                  className={`w-52 flex flex-col rounded-xl border p-4 transition-colors
+                  className={`flex-1 flex flex-col rounded-xl border p-4 transition-colors
                     ${
                       isCurrent
                         ? "bg-[#141519]"
@@ -283,7 +276,7 @@ export default function Subscription({
                     </span>
                     {plan.badge && (
                       <span
-                        className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-linear-to-r text-white shadow-sm"
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white shadow-sm"
                         style={{
                           backgroundImage: `linear-gradient(to right, ${BADGE_GRADIENTS[plan.badge.text]?.from}, ${BADGE_GRADIENTS[plan.badge.text]?.to})`,
                         }}
@@ -377,17 +370,8 @@ export default function Subscription({
           </div>
         </div>
 
-        {/* 해지 + 투자 위험 고지 */}
+        {/* 투자 위험 고지 */}
         <div className="px-8 pb-6 shrink-0 flex flex-col gap-3">
-          {currentPlan && (
-            <button
-              onClick={handleCancel}
-              disabled={loading}
-              className="self-start text-xs text-zinc-600 hover:text-red-400 transition-colors disabled:opacity-50 cursor-pointer underline underline-offset-2"
-            >
-              구독 해지
-            </button>
-          )}
           <div className="bg-[#141519] border border-[#2a2d36] rounded-xl px-5 py-4">
             <p className="text-[11px] font-semibold text-zinc-400 mb-1.5">
               투자 위험 고지

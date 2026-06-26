@@ -6,7 +6,7 @@ interface ChartState {
   showMA60: boolean;
   showIchimoku: boolean;
 
-  // 3개의 차트 공유 state
+  // 차트 상태 공유 state (줌, 크로스헤어)
   hoveredDate: string | null;
   priceScaleWidth: number;
   visibleRange: any;
@@ -20,6 +20,8 @@ interface ChartState {
   setHoveredDate: (date: string | null) => void;
   setPriceScaleWidth: (width: number) => void;
   setVisibleRange: (range: any) => void;
+  visibleDateRange: { from: string; to: string } | null;
+  setVisibleDateRange: (range: { from: string; to: string } | null) => void;
 }
 
 export const useChartStore = create<ChartState>(set => ({
@@ -44,4 +46,6 @@ export const useChartStore = create<ChartState>(set => ({
       priceScaleWidth: Math.max(state.priceScaleWidth, width),
     })),
   setVisibleRange: range => set({ visibleRange: range }),
+  visibleDateRange: null,
+  setVisibleDateRange: range => set({ visibleDateRange: range }),
 }));

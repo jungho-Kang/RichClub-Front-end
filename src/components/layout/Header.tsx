@@ -48,6 +48,14 @@ const PLAN_COLORS: Record<
   },
 };
 
+const PLAN_LABELS: Record<string, string> = {
+  "basic-plan": "Demo",
+  "ju-model": "Basic",
+  "seo-model": "Pro",
+  "auto-trade": "Max",
+  telegram: "텔레그램",
+};
+
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const [subOpen, setSubOpen] = useState(false);
@@ -143,7 +151,7 @@ const Header = () => {
                 className="text-[11px] font-medium"
                 style={{ color: planColor.text }}
               >
-                {currentPlan ?? "무료"}
+                {PLAN_LABELS[currentPlan ?? "basic-plan"] ?? "Demo"}
               </span>
             </button>
           </div>

@@ -41,13 +41,20 @@ const MACDChart = () => {
     try {
       const res = await axios.get(
         `/api/v1/stock/chart/macd/${selectedStock.stock_code}`,
-        {
-          params: { period: "all" },
-        },
+        { params: { period: "all" } },
       );
 
-      const data: MACDData[] = res.data.data ?? [];
-      setData(data);
+      const raw: MACDData[] = res.data.data ?? [];
+
+      // 날짜 기준 중복 제거 (마지막 값 유지) 후 오름차순 정렬
+      const deduped = Object.values(
+        raw.reduce<Record<string, MACDData>>((acc, item) => {
+          acc[item.date] = item; // 같은 날짜면 나중 값으로 덮어씀
+          return acc;
+        }, {}),
+      ).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+      setData(deduped);
     } catch (err) {
       console.log(err);
     }
