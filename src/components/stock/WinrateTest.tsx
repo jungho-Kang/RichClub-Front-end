@@ -236,8 +236,49 @@ const WinrateTest = () => {
 
       {/* 로딩 */}
       {loading && (
-        <div className="py-6 text-center text-[12px] text-zinc-600">
-          분석 중…
+        <div className="flex flex-col gap-3">
+          {/* 거래 내역 skeleton */}
+          <div className="flex flex-col gap-2">
+            <div className="w-12 h-3 bg-[#23242a] rounded animate-pulse" />
+            {[1, 2, 3].map(i => (
+              <div
+                key={i}
+                className="flex justify-between py-2 border-b border-[#23242a]"
+              >
+                <div className="flex gap-2 items-center">
+                  <div className="w-4 h-3 bg-[#23242a] rounded animate-pulse" />
+                  <div className="flex flex-col gap-1">
+                    <div className="w-20 h-2.5 bg-[#23242a] rounded animate-pulse" />
+                    <div className="w-20 h-2.5 bg-[#23242a] rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="w-14 h-3 bg-[#23242a] rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+          {/* 누적 요약 skeleton */}
+          <div className="bg-[#0f1013] border border-[#23242a] rounded-xl px-3 py-3 flex flex-col gap-2">
+            <div className="w-16 h-2.5 bg-[#23242a] rounded animate-pulse" />
+            <div className="w-24 h-7 bg-[#23242a] rounded animate-pulse" />
+            <div className="w-40 h-2.5 bg-[#23242a] rounded animate-pulse" />
+          </div>
+          {/* 시뮬레이터 skeleton */}
+          <div className="flex flex-col gap-2">
+            <div className="w-28 h-2.5 bg-[#23242a] rounded animate-pulse" />
+            <div className="w-full h-9 bg-[#23242a] rounded-lg animate-pulse" />
+            <div className="flex gap-1">
+              {[1, 2, 3, 4].map(i => (
+                <div
+                  key={i}
+                  className="flex-1 h-7 bg-[#23242a] rounded-md animate-pulse"
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="h-14 bg-[#23242a] rounded-xl animate-pulse" />
+              <div className="h-14 bg-[#23242a] rounded-xl animate-pulse" />
+            </div>
+          </div>
         </div>
       )}
 
@@ -247,7 +288,7 @@ const WinrateTest = () => {
           {/* 거래 내역 */}
           <div className="flex flex-col gap-0">
             <div className="text-[11px] text-zinc-500 mb-1.5">거래 내역</div>
-            <div className="flex flex-col gap-0 max-h-48 overflow-y-auto pr-0.5">
+            <div className="flex flex-col h-36 overflow-y-auto pr-0.5">
               {result.trades?.length ? (
                 result.trades.map((t, i) => (
                   <div

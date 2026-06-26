@@ -23,7 +23,7 @@ const inputClass =
   "transition-colors duration-150";
 
 const btnPrimary =
-  "w-full py-3 rounded-lg text-sm font-semibold text-white " +
+  "w-full py-3 rounded-lg text-sm font-semibold text-white cursor-pointer " +
   "bg-[#7C5CFF] hover:bg-[#6a4de0] active:bg-[#5c40c9] " +
   "transition-colors duration-150 " +
   "disabled:opacity-50 disabled:cursor-not-allowed " +
@@ -42,6 +42,8 @@ export default function SignUp({ isOpen, onClose }: Props) {
   const [email, setEmail] = useState("");
   const [timer, setTimer] = useState(TIMER_SECONDS);
   const [timerActive, setTimerActive] = useState(false);
+  const [resending, setResending] = useState(false);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const emailForm = useForm<{ email: string }>();
@@ -90,7 +92,7 @@ export default function SignUp({ isOpen, onClose }: Props) {
   useEffect(() => {
     if (!isOpen) {
       setTimeout(() => {
-        // setStep("email");
+        setStep("email");
         setEmail("");
         setTimer(TIMER_SECONDS);
         setTimerActive(false);
@@ -114,11 +116,11 @@ export default function SignUp({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   // 인증 미완료 상태에서 닫기 시도 시 경고
-  async function handleClose() {
+  const handleClose = async () => {
     if (step === "code") {
       const result = await Swal.fire({
-        title: "인증을 완료하지 않고 나가시겠습니까?",
-        text: "이 페이지를 나가시면 다음에 인증을 다시 시도해야 합니다.",
+        title: "",
+        text: "인증을 완료하지 않고 나가시겠습니까?",
         icon: "warning",
         showCancelButton: true,
         cancelButtonText: "취소",
@@ -130,22 +132,22 @@ export default function SignUp({ isOpen, onClose }: Props) {
       return;
     }
     onClose();
-  }
+  };
 
-  async function sendCode(targetEmail: string) {
+  // 인증코드 발송
+  const sendCode = async (email: string) => {
     try {
-      await axios.post("/api/v1/auth/email/send-code", { email: targetEmail });
+      await axios.post("/api/v1/auth/email/send-code", { email });
     } catch (error) {
-      console.log(error);
       await Swal.fire({
         title: "발송 실패",
-        text: "가입되지 않은 이메일이거나 이미 사용 중인 이메일입니다.",
+        text: "이미 사용 중인 이메일입니다.",
         icon: "error",
         ...swalBase,
       });
       throw error;
     }
-  }
+  };
 
   const onSubmitEmail = emailForm.handleSubmit(async data => {
     try {
@@ -165,24 +167,28 @@ export default function SignUp({ isOpen, onClose }: Props) {
     }
   });
 
-  async function handleResend() {
+  const handleResend = async () => {
+    setResending(true);
     try {
       await sendCode(email);
       setTimer(TIMER_SECONDS);
       setTimerActive(true);
       await Swal.fire({
         title: "재전송 완료",
-        text: "인증코드를 다시 전송했습니다.",
+        text: "메일함을 다시 확인해 주세요.",
         icon: "success",
         ...swalBase,
       });
     } catch (error) {
       console.log(error);
+    } finally {
+      setResending(false);
     }
-  }
+  };
 
   const onSubmitCode = codeForm.handleSubmit(async data => {
     try {
+      // 인증코드 검증
       await axios.post("/api/v1/auth/email/verify-code", {
         email,
         code: data.code,
@@ -202,6 +208,7 @@ export default function SignUp({ isOpen, onClose }: Props) {
 
   const onSubmitInfo = infoForm.handleSubmit(async data => {
     try {
+      // 회원가입
       await axios.post("/api/v1/auth/signup", {
         email,
         name: data.name,
@@ -259,7 +266,7 @@ export default function SignUp({ isOpen, onClose }: Props) {
             onClick={handleClose}
             aria-label="닫기"
             className="w-7 h-7 flex items-center justify-center text-gray-500
-                       hover:text-white transition-colors rounded-sm
+                       hover:text-white transition-colors rounded-sm cursor-pointer
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]"
           >
             ✕
@@ -332,12 +339,16 @@ export default function SignUp({ isOpen, onClose }: Props) {
                   <button
                     type="button"
                     onClick={handleResend}
-                    className="text-[12px] text-[#9B7BFF] underline underline-offset-2
-                               hover:text-[#B794F4] transition-colors
-                               focus-visible:outline-none focus-visible:ring-2
-                               focus-visible:ring-[#7C5CFF] rounded-sm"
+                    disabled={resending}
+                    className={`text-[12px] transition-colors focus-visible:outline-none focus-visible:ring-2
+                              focus-visible:ring-[#7C5CFF] rounded-sm
+                              ${
+                                resending
+                                  ? "text-zinc-600 cursor-not-allowed"
+                                  : "text-[#9B7BFF] underline underline-offset-2 hover:text-[#B794F4] cursor-pointer"
+                              }`}
                   >
-                    재전송
+                    {resending ? "재전송 중…" : "재전송"}
                   </button>
                 </div>
                 <div className="relative">

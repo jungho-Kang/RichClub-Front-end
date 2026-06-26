@@ -55,7 +55,6 @@ const Header = () => {
     }
   }, [accessToken]);
 
-  // TODO : 종목 검색 만들기
   return (
     <header className="flex items-center justify-between bg-[#141519] border border-[#26272c] rounded-2xl px-5 py-3">
       <div className="flex items-center gap-3">

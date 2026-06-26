@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 
@@ -23,15 +23,27 @@ const inputClass =
   "transition-colors duration-150";
 
 const btnPrimary =
-  "w-full py-3 rounded-lg text-sm font-semibold text-white " +
+  "w-full py-3 rounded-lg text-sm font-semibold text-white cursor-pointer " +
   "bg-[#7C5CFF] hover:bg-[#6a4de0] active:bg-[#5c40c9] " +
   "transition-colors duration-150 " +
   "disabled:opacity-50 disabled:cursor-not-allowed " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]";
 
-export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
+const TIMER_SECONDS = 5 * 60;
+
+const formatTime = (sec: number) => {
+  const m = String(Math.floor(sec / 60)).padStart(2, "0");
+  const s = String(sec % 60).padStart(2, "0");
+  return `${m}:${s}`;
+};
+
+export default function ForgotPassword({ isOpen, onClose }: Props) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [timer, setTimer] = useState(TIMER_SECONDS);
+  const [timerActive, setTimerActive] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const emailForm = useForm<{ email: string }>();
   const codeForm = useForm<{ code: string }>();
@@ -54,12 +66,33 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
   const isPasswordMismatch =
     !!confirmPasswordValue && newPasswordValue !== confirmPasswordValue;
 
+  // 타이머
+  useEffect(() => {
+    if (timerActive) {
+      intervalRef.current = setInterval(() => {
+        setTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current!);
+            setTimerActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [timerActive]);
+
   // 폼 초기화
   useEffect(() => {
     if (!isOpen) {
       setTimeout(() => {
         setStep("email");
         setEmail("");
+        setTimer(TIMER_SECONDS);
+        setTimerActive(false);
         emailForm.reset();
         codeForm.reset();
         passwordForm.reset();
@@ -67,7 +100,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
     }
   }, [isOpen]);
 
-  // Esc로 모달창 끄기
+  // ESC
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -88,9 +121,17 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
   // 인증코드 발송
   const sendCode = async (email: string) => {
     try {
-      await axios.post("/api/v1/auth/email/send-code", { email });
+      await axios.post("/api/v1/auth/password/send-code", {
+        email,
+      });
     } catch (error) {
-      console.log(error);
+      await Swal.fire({
+        title: "발송 실패",
+        text: "가입되지 않은 이메일입니다.",
+        icon: "error",
+        ...swalBase,
+      });
+      throw error;
     }
   };
 
@@ -98,6 +139,8 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
     try {
       await sendCode(data.email);
       setEmail(data.email);
+      setTimer(TIMER_SECONDS);
+      setTimerActive(true);
       await Swal.fire({
         title: "인증코드 발송 완료",
         text: `${data.email}로 인증코드를 전송했습니다. 메일을 확인해 주세요.`,
@@ -107,35 +150,36 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
       setStep("code");
     } catch (error) {
       console.log(error);
-      await Swal.fire({
-        title: "발송 실패",
-        text: "가입되지 않은 이메일입니다.",
-        icon: "error",
-        ...swalBase,
-      });
     }
   });
 
   const handleResend = async () => {
+    setResending(true);
     try {
       await sendCode(email);
+      setTimer(TIMER_SECONDS);
+      setTimerActive(true);
       await Swal.fire({
         title: "재전송 완료",
-        text: "인증코드를 다시 전송했습니다.",
+        text: "메일함을 다시 확인해 주세요.",
         icon: "success",
         ...swalBase,
       });
     } catch (error) {
       console.log(error);
+    } finally {
+      setResending(false);
     }
   };
 
   const onSubmitCode = codeForm.handleSubmit(async data => {
     try {
-      await axios.post("/api/v1/auth/password/verify", {
+      // 인증코드 검증
+      await axios.post("/api/v1/auth/password/verify-code", {
         email,
         code: data.code,
       });
+      setTimerActive(false);
       setStep("password");
     } catch (error) {
       console.log(error);
@@ -150,6 +194,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
 
   const onSubmitPassword = passwordForm.handleSubmit(async data => {
     try {
+      // 비밀번호 재설정
       await axios.post("/api/v1/auth/password/reset", {
         email,
         code: codeForm.getValues("code"),
@@ -196,7 +241,7 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
             onClick={onClose}
             aria-label="닫기"
             className="w-7 h-7 flex items-center justify-center text-gray-500
-                       hover:text-white transition-colors rounded-sm
+                       hover:text-white transition-colors rounded-sm cursor-pointer
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]"
           >
             ✕
@@ -239,28 +284,48 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
                   <button
                     type="button"
                     onClick={handleResend}
-                    className="text-[12px] text-[#9B7BFF] underline underline-offset-2
-                               hover:text-[#B794F4] transition-colors
-                               focus-visible:outline-none focus-visible:ring-2
-                               focus-visible:ring-[#7C5CFF] rounded-sm"
+                    disabled={resending}
+                    className={`text-[12px] transition-colors focus-visible:outline-none focus-visible:ring-2
+                                focus-visible:ring-[#7C5CFF] rounded-sm
+                                ${
+                                  resending
+                                    ? "text-zinc-600 cursor-not-allowed"
+                                    : "text-[#9B7BFF] underline underline-offset-2 hover:text-[#B794F4] cursor-pointer"
+                                }`}
                   >
-                    재전송
+                    {resending ? "재전송 중…" : "재전송"}
                   </button>
                 </div>
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder="코드 6자리 입력"
-                  {...codeForm.register("code", { required: true })}
-                  className={inputClass}
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  maxLength={6}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="코드 6자리 입력"
+                    {...codeForm.register("code", { required: true })}
+                    disabled={timer === 0}
+                    className={`${inputClass} pr-16 ${timer === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    maxLength={6}
+                  />
+                  <span
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 text-[12px] tabular-nums
+                                    ${timer === 0 ? "text-red-400" : "text-gray-500"}`}
+                  >
+                    ⏱ {formatTime(timer)}
+                  </span>
+                </div>
+                {timer === 0 && (
+                  <p className="text-[12px] text-red-400">
+                    인증 시간이 만료되었습니다. 재전송 버튼을 눌러주세요.
+                  </p>
+                )}
               </div>
               <button
                 type="submit"
-                disabled={codeForm.formState.isSubmitting || !codeValue}
+                disabled={
+                  codeForm.formState.isSubmitting || !codeValue || timer === 0
+                }
                 className={btnPrimary}
               >
                 {codeForm.formState.isSubmitting ? "확인 중…" : "확인"}
@@ -322,7 +387,8 @@ export default function ForgotPasswordModal({ isOpen, onClose }: Props) {
                   pwSubmitting ||
                   !newPasswordValue ||
                   !confirmPasswordValue ||
-                  !isPasswordMatch
+                  !isPasswordMatch ||
+                  !!pwErrors.newPassword
                 }
                 className={btnPrimary}
               >

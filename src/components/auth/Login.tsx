@@ -85,7 +85,7 @@ const Login = ({ onForgotPassword }: LoginProps) => {
           <button
             type="button"
             onClick={onForgotPassword}
-            className="text-[12px] text-gray-600 hover:text-gray-400
+            className="text-[12px] text-gray-600 hover:text-gray-400 cursor-pointer
                transition-colors self-end focus-visible:outline-none
                focus-visible:ring-2 focus-visible:ring-[#7C5CFF] rounded-sm"
           >
