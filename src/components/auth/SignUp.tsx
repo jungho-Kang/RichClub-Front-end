@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
 import axios, { AxiosError } from "axios";
-import Swal from "sweetalert2";
+import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+
+import { btnPrimary, inputClass } from "@/lib/styles";
+import { alertSuccess, alertError, alertConfirm } from "@/lib/swal";
 
 interface Props {
   isOpen: boolean;
@@ -10,26 +12,7 @@ interface Props {
 
 type Step = "email" | "code" | "info";
 
-const swalBase = {
-  background: "#101319",
-  color: "#fff",
-  confirmButtonColor: "#6F4CDB",
-};
-
-const inputClass =
-  "w-full bg-[#0f1117] border border-[#2a2d36] rounded-lg px-4 py-3 " +
-  "text-sm text-white placeholder-gray-600 " +
-  "focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] " +
-  "transition-colors duration-150";
-
-const btnPrimary =
-  "w-full py-3 rounded-lg text-sm font-semibold text-white cursor-pointer " +
-  "bg-[#7C5CFF] hover:bg-[#6a4de0] active:bg-[#5c40c9] " +
-  "transition-colors duration-150 " +
-  "disabled:opacity-50 disabled:cursor-not-allowed " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]";
-
-const TIMER_SECONDS = 5 * 60; // 5분
+const TIMER_SECONDS = 5 * 60;
 
 function formatTime(sec: number) {
   const m = String(Math.floor(sec / 60)).padStart(2, "0");
@@ -69,7 +52,6 @@ export default function SignUp({ isOpen, onClose }: Props) {
   const isPasswordMismatch =
     !!confirmPasswordValue && passwordValue !== confirmPasswordValue;
 
-  // 타이머
   useEffect(() => {
     if (timerActive) {
       intervalRef.current = setInterval(() => {
@@ -88,7 +70,6 @@ export default function SignUp({ isOpen, onClose }: Props) {
     };
   }, [timerActive]);
 
-  // 모달 닫힐 때 초기화
   useEffect(() => {
     if (!isOpen) {
       setTimeout(() => {
@@ -103,7 +84,6 @@ export default function SignUp({ isOpen, onClose }: Props) {
     }
   }, [isOpen]);
 
-  // ESC
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -115,36 +95,24 @@ export default function SignUp({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
-  // 인증 미완료 상태에서 닫기 시도 시 경고
   const handleClose = async () => {
     if (step === "code") {
-      const result = await Swal.fire({
-        title: "",
-        text: "인증을 완료하지 않고 나가시겠습니까?",
-        icon: "warning",
-        showCancelButton: true,
-        cancelButtonText: "취소",
-        confirmButtonText: "나가기",
-        cancelButtonColor: "#2a2d36",
-        ...swalBase,
-      });
+      const result = await alertConfirm(
+        "",
+        "인증을 완료하지 않고 나가시겠습니까?",
+        "나가기",
+      );
       if (result.isConfirmed) onClose();
       return;
     }
     onClose();
   };
 
-  // 인증코드 발송
   const sendCode = async (email: string) => {
     try {
       await axios.post("/api/v1/auth/email/send-code", { email });
     } catch (error) {
-      await Swal.fire({
-        title: "발송 실패",
-        text: "이미 사용 중인 이메일입니다.",
-        icon: "error",
-        ...swalBase,
-      });
+      await alertError("발송 실패", "이미 사용 중인 이메일입니다.");
       throw error;
     }
   };
@@ -155,12 +123,10 @@ export default function SignUp({ isOpen, onClose }: Props) {
       setEmail(data.email);
       setTimer(TIMER_SECONDS);
       setTimerActive(true);
-      await Swal.fire({
-        title: "인증코드 발송 완료",
-        text: `${data.email}로 인증코드를 전송했습니다. 메일을 확인해 주세요.`,
-        icon: "success",
-        ...swalBase,
-      });
+      await alertSuccess(
+        "인증코드 발송 완료",
+        `${data.email}로 인증코드를 전송했습니다. 메일을 확인해 주세요.`,
+      );
       setStep("code");
     } catch (error) {
       console.log(error);
@@ -173,12 +139,7 @@ export default function SignUp({ isOpen, onClose }: Props) {
       await sendCode(email);
       setTimer(TIMER_SECONDS);
       setTimerActive(true);
-      await Swal.fire({
-        title: "재전송 완료",
-        text: "메일함을 다시 확인해 주세요.",
-        icon: "success",
-        ...swalBase,
-      });
+      await alertSuccess("재전송 완료", "메일함을 다시 확인해 주세요.");
     } catch (error) {
       console.log(error);
     } finally {
@@ -188,7 +149,6 @@ export default function SignUp({ isOpen, onClose }: Props) {
 
   const onSubmitCode = codeForm.handleSubmit(async data => {
     try {
-      // 인증코드 검증
       await axios.post("/api/v1/auth/email/verify-code", {
         email,
         code: data.code,
@@ -197,29 +157,18 @@ export default function SignUp({ isOpen, onClose }: Props) {
       setStep("info");
     } catch (error) {
       console.log(error);
-      await Swal.fire({
-        title: "인증 실패",
-        text: "인증코드가 올바르지 않습니다.",
-        icon: "error",
-        ...swalBase,
-      });
+      await alertError("인증 실패", "인증코드가 올바르지 않습니다.");
     }
   });
 
   const onSubmitInfo = infoForm.handleSubmit(async data => {
     try {
-      // 회원가입
       await axios.post("/api/v1/auth/signup", {
         email,
         name: data.name,
         password: data.password,
       });
-      await Swal.fire({
-        title: "회원가입 성공",
-        text: "가입이 정상적으로 처리되었습니다.",
-        icon: "success",
-        ...swalBase,
-      });
+      await alertSuccess("회원가입 성공", "가입이 정상적으로 처리되었습니다.");
       onClose();
     } catch (error) {
       console.log(error);
@@ -228,12 +177,7 @@ export default function SignUp({ isOpen, onClose }: Props) {
         err.response?.status === 409
           ? "이미 사용 중인 이메일입니다."
           : "회원가입에 실패했습니다. 다시 시도해 주세요.";
-      await Swal.fire({
-        title: "회원가입 실패",
-        text: message,
-        icon: "error",
-        ...swalBase,
-      });
+      await alertError("회원가입 실패", message);
     }
   });
 

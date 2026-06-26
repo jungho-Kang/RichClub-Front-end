@@ -1,14 +1,11 @@
 import axios from "axios";
-import Swal from "sweetalert2";
-
 import { setCookie } from "@/utils/cookie";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-
 import { useModalStore } from "@/stores/useModalStore";
-
 import InputField from "@/components/ui/InputField";
 import { useNavigate } from "react-router-dom";
+import { alertError, alertSuccess } from "@/lib/swal";
 
 interface LoginForm {
   email: string;
@@ -40,35 +37,21 @@ const Login = ({ onForgotPassword }: LoginProps) => {
       const accessToken = res.data.access_token;
       setCookie("accessToken", accessToken, { hours: 1 });
 
-      await Swal.fire({
-        title: "로그인 성공",
-        text: "로그인이 정상적으로 완료되었습니다.",
-        icon: "success",
-        background: "#101319",
-        color: "#fff",
-        confirmButtonColor: "#6F4CDB",
-      });
+      setLoading(false);
+
+      await alertSuccess("로그인 성공", "로그인이 정상적으로 완료되었습니다.");
       close();
       navigate("/", { replace: true });
       window.location.reload();
-    } catch (error: any) {
-      await Swal.fire({
-        title: "로그인 실패",
-        text: "로그인 정보를 확인해주세요.",
-        icon: "error",
-        background: "#101319",
-        color: "#fff",
-        confirmButtonColor: "#6F4CDB",
-      });
-    } finally {
+    } catch {
       setLoading(false);
+      await alertError("로그인 실패", "로그인 정보를 확인해주세요.");
     }
   };
 
   return (
     <div>
       <div className="space-y-5">
-        {/* 폼 */}
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <InputField
             label="이메일"

@@ -1,12 +1,12 @@
-import type { Step, TradeHistory } from "@/types/trade-history";
-import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-
-import { BADGE } from "@/constants/tradeStyles";
 import axios from "axios";
 import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+
+import type { Step, TradeHistory } from "@/types/trade-history";
+import { BADGE } from "@/constants/tradeStyles";
+import { alertDanger, alertError, alertSuccess } from "@/lib/swal";
 import TradeHistoryHeader from "./TradeHistoryHeader";
-import Swal from "sweetalert2";
 
 interface TradeHistoryListProps {
   onClose: () => void;
@@ -41,18 +41,11 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
   };
 
   const handleDelete = async (id: string) => {
-    const result = await Swal.fire({
-      title: "삭제하시겠어요?",
-      text: "삭제된 기록은 복구할 수 없습니다.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "삭제",
-      cancelButtonText: "취소",
-      background: "#101319",
-      color: "#fff",
-      confirmButtonColor: "#E44B58",
-      cancelButtonColor: "#929292",
-    });
+    const result = await alertDanger(
+      "삭제하시겠어요?",
+      "삭제된 기록은 복구할 수 없습니다.",
+      "삭제",
+    );
 
     if (!result.isConfirmed) return;
 
@@ -61,23 +54,9 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
 
       setTradeData(prev => prev.filter(item => item.id !== id));
 
-      await Swal.fire({
-        title: "삭제 완료",
-        text: "기록이 정상적으로 삭제되었습니다.",
-        icon: "success",
-        background: "#101319",
-        color: "#fff",
-        confirmButtonColor: "#6F4CDB",
-      });
+      await alertSuccess("삭제 완료", "기록이 정상적으로 삭제되었습니다.");
     } catch (error) {
-      await Swal.fire({
-        title: "삭제 실패",
-        text: "잠시 후 다시 시도해주세요.",
-        icon: "error",
-        background: "#101319",
-        color: "#fff",
-        confirmButtonColor: "#E44B58",
-      });
+      await alertError("삭제 실패", "잠시 후 다시 시도해주세요.");
     }
   };
 

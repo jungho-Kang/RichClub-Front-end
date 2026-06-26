@@ -288,7 +288,7 @@ const WinrateTest = () => {
           {/* 거래 내역 */}
           <div className="flex flex-col gap-0">
             <div className="text-[11px] text-zinc-500 mb-1.5">거래 내역</div>
-            <div className="flex flex-col h-36 overflow-y-auto pr-0.5">
+            <div className="flex flex-col h-36 overflow-y-auto">
               {result.trades?.length ? (
                 result.trades.map((t, i) => (
                   <div

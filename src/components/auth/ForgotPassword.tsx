@@ -1,7 +1,9 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import Swal from "sweetalert2";
+import { useEffect, useRef, useState } from "react";
+
+import { alertError, alertSuccess } from "@/lib/swal";
+import { btnPrimary, inputClass } from "@/lib/styles";
 
 interface Props {
   isOpen: boolean;
@@ -9,25 +11,6 @@ interface Props {
 }
 
 type Step = "email" | "code" | "password";
-
-const swalBase = {
-  background: "#101319",
-  color: "#fff",
-  confirmButtonColor: "#6F4CDB",
-};
-
-const inputClass =
-  "w-full bg-[#0f1117] border border-[#2a2d36] rounded-lg px-4 py-3 " +
-  "text-sm text-white placeholder-gray-600 " +
-  "focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] " +
-  "transition-colors duration-150";
-
-const btnPrimary =
-  "w-full py-3 rounded-lg text-sm font-semibold text-white cursor-pointer " +
-  "bg-[#7C5CFF] hover:bg-[#6a4de0] active:bg-[#5c40c9] " +
-  "transition-colors duration-150 " +
-  "disabled:opacity-50 disabled:cursor-not-allowed " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]";
 
 const TIMER_SECONDS = 5 * 60;
 
@@ -125,12 +108,7 @@ export default function ForgotPassword({ isOpen, onClose }: Props) {
         email,
       });
     } catch (error) {
-      await Swal.fire({
-        title: "발송 실패",
-        text: "가입되지 않은 이메일입니다.",
-        icon: "error",
-        ...swalBase,
-      });
+      await alertError("발송 실패", "가입되지 않은 이메일입니다.");
       throw error;
     }
   };
@@ -141,12 +119,10 @@ export default function ForgotPassword({ isOpen, onClose }: Props) {
       setEmail(data.email);
       setTimer(TIMER_SECONDS);
       setTimerActive(true);
-      await Swal.fire({
-        title: "인증코드 발송 완료",
-        text: `${data.email}로 인증코드를 전송했습니다. 메일을 확인해 주세요.`,
-        icon: "success",
-        ...swalBase,
-      });
+      await alertSuccess(
+        "인증코드 발송 완료",
+        `${data.email}로 인증코드를 전송했습니다. 메일을 확인해 주세요.`,
+      );
       setStep("code");
     } catch (error) {
       console.log(error);
@@ -159,12 +135,7 @@ export default function ForgotPassword({ isOpen, onClose }: Props) {
       await sendCode(email);
       setTimer(TIMER_SECONDS);
       setTimerActive(true);
-      await Swal.fire({
-        title: "재전송 완료",
-        text: "메일함을 다시 확인해 주세요.",
-        icon: "success",
-        ...swalBase,
-      });
+      await alertSuccess("재전송 완료", "메일함을 다시 확인해 주세요.");
     } catch (error) {
       console.log(error);
     } finally {
@@ -183,12 +154,7 @@ export default function ForgotPassword({ isOpen, onClose }: Props) {
       setStep("password");
     } catch (error) {
       console.log(error);
-      await Swal.fire({
-        title: "인증 실패",
-        text: "인증코드가 올바르지 않습니다.",
-        icon: "error",
-        ...swalBase,
-      });
+      await alertError("인증 실패", "인증코드가 올바르지 않습니다.");
     }
   });
 
@@ -200,21 +166,17 @@ export default function ForgotPassword({ isOpen, onClose }: Props) {
         code: codeForm.getValues("code"),
         new_password: data.newPassword,
       });
-      await Swal.fire({
-        title: "비밀번호 변경 완료",
-        text: "비밀번호가 성공적으로 변경되었습니다.",
-        icon: "success",
-        ...swalBase,
-      });
+      await alertSuccess(
+        "비밀번호 변경 완료",
+        "비밀번호가 성공적으로 변경되었습니다.",
+      );
       onClose();
     } catch (error) {
       console.log(error);
-      await Swal.fire({
-        title: "변경 실패",
-        text: "비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.",
-        icon: "error",
-        ...swalBase,
-      });
+      await alertError(
+        "변경 실패",
+        "비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.",
+      );
     }
   });
 

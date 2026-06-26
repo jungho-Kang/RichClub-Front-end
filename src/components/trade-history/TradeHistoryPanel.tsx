@@ -42,7 +42,7 @@ export default function TradeHistoryPanel({
           <TradeHistoryList onClose={handleClose} setStep={setStep} />
         )}
 
-        {/* ── Step 2: 입력 폼 ── */}
+        {/* 매매일지 추가 */}
         {step === "form" && (
           <TradeHistoryForm onClose={handleClose} setStep={setStep} />
         )}

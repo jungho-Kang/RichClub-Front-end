@@ -1,1 +1,71 @@
 @import "tailwindcss";
+
+/* 스크롤바 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2d36 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 3px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #2a2d36;
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #3a3d46;
+}
+
+/* Swal 커스텀 */
+.swal2-popup {
+  border: 1px solid #2a2d36 !important;
+  border-radius: 16px !important;
+  padding: 1.5rem !important;
+}
+
+.swal2-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+}
+
+.swal2-html-container {
+  font-size: 0.8rem !important;
+  color: #71717a !important;
+  margin-top: 0.25rem !important;
+}
+
+.swal2-confirm {
+  border-radius: 8px !important;
+  padding: 0.5rem 0 !important;
+  width: 100% !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+.swal2-cancel {
+  border-radius: 8px !important;
+  padding: 0.5rem 0 !important;
+  width: 100% !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+.swal2-icon {
+  transform: scale(0.6) !important; /* 0.75 → 0.6 */
+  margin-bottom: -1rem !important; /* 아이콘 아래 여백 제거 */
+  margin-top: -0.5rem !important;
+}
+
+.swal2-actions {
+  margin-top: 1.25rem !important;
+  width: 100% !important;
+  padding: 0 !important;
+}

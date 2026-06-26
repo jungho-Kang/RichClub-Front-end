@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import axios from "axios";
 import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { alertSuccess } from "@/lib/swal";
+import { BADGE } from "@/constants/tradeStyles";
 import type { Step, TradeHistory, TradeType } from "@/types/trade-history";
 import TradeHistoryHeader from "./TradeHistoryHeader";
-import { BADGE } from "@/constants/tradeStyles";
-import axios from "axios";
-import Swal from "sweetalert2";
 
 interface Stock {
   stock_code: string;
@@ -61,14 +61,7 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
   const postTradeHistory = async (data: TradeHistory) => {
     try {
       await axios.post("/api/v1/trade-log", data);
-      await Swal.fire({
-        title: "저장 완료",
-        text: "매매일지가 저장되었습니다.",
-        icon: "success",
-        background: "#101319",
-        color: "#fff",
-        confirmButtonColor: "#6F4CDB",
-      });
+      await alertSuccess("저장 완료", "매매일지가 저장되었습니다.");
     } catch (error) {
       console.log(error);
     }
