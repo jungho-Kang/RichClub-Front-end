@@ -69,7 +69,7 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
           <button
             key={v}
             onClick={() => setView(v)}
-            className={`flex-1 text-xs px-2 py-1 rounded-md transition-all duration-150 cursor-pointer ${
+            className={`flex-1 text-xs px-2 py-1 rounded-md transition-all duration-150 ${
               view === v
                 ? "bg-white/10 text-white shadow-sm"
                 : "text-zinc-500 hover:text-white hover:bg-white/5"
@@ -92,7 +92,7 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs px-2 py-1 rounded-md transition-all duration-150 cursor-pointer ${
+                className={`text-xs px-2 py-1 rounded-md transition-all duration-150 ${
                   tab === t
                     ? "bg-white/10 text-white shadow-sm"
                     : "text-zinc-500 hover:text-white hover:bg-white/5"
@@ -189,7 +189,7 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
                     e.stopPropagation();
                     removeWatch(s.stock_code);
                   }}
-                  className="text-amber-400 hover:text-zinc-500 transition-colors p-1 cursor-pointer"
+                  className="text-amber-400 hover:text-zinc-500 transition-colors p-1"
                 >
                   <Star className="w-4 h-4" fill={"currentColor"} />
                 </button>

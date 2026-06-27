@@ -200,7 +200,7 @@ const StockCard = ({ won, pct }: StockCardProps) => {
         <button
           onClick={toggleWatch}
           disabled={watchLoading || !data.stock_code}
-          className={`p-2 rounded-xl transition-all duration-150 cursor-pointer active:scale-90
+          className={`p-2 rounded-xl transition-all duration-150 active:scale-90
                       disabled:opacity-30 disabled:cursor-not-allowed
                       ${
                         isWatched(data.stock_code)

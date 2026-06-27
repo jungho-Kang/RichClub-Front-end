@@ -106,7 +106,6 @@ const WinrateTest = () => {
       };
 
       const res = await axios.get(MODE_CONFIG[mode].endpoint, { params });
-      console.log(res.data);
       setResult(res.data);
     } catch (err) {
       console.log(err);
@@ -168,7 +167,7 @@ const WinrateTest = () => {
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`flex-1 text-[11px] py-1.5 rounded-md transition-all duration-150 cursor-pointer whitespace-nowrap ${
+            className={`flex-1 text-[11px] py-1.5 rounded-md transition-all duration-150 whitespace-nowrap ${
               mode === m
                 ? "bg-white/10 text-white shadow-sm"
                 : "text-zinc-500 hover:text-white hover:bg-white/5"
@@ -186,7 +185,7 @@ const WinrateTest = () => {
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`flex-1 text-[11px] py-1.5 rounded-md border transition-all duration-150 cursor-pointer ${
+              className={`flex-1 text-[11px] py-1.5 rounded-md border transition-all duration-150 ${
                 period === p
                   ? "border-[#7C5CFF] bg-[#7C5CFF]/10 text-[#9B7BFF]"
                   : "border-[#2a2d36] bg-[#0f1013] text-zinc-500 hover:text-white hover:border-zinc-600"
@@ -395,7 +394,7 @@ const WinrateTest = () => {
                   onClick={() => setInvestment(String(v * 10000))}
                   className="flex-1 text-[10px] py-1.5 rounded-md border border-[#2a2d36]
                              bg-[#0f1013] text-zinc-500 hover:text-white hover:border-zinc-600
-                             transition-all cursor-pointer"
+                             transition-all"
                 >
                   {v}만
                 </button>

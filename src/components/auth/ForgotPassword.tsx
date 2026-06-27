@@ -203,7 +203,7 @@ export default function ForgotPassword({ isOpen, onClose }: Props) {
             onClick={onClose}
             aria-label="닫기"
             className="w-7 h-7 flex items-center justify-center text-gray-500
-                       hover:text-white transition-colors rounded-sm cursor-pointer
+                       hover:text-white transition-colors rounded-sm
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF]"
           >
             ✕
@@ -252,7 +252,7 @@ export default function ForgotPassword({ isOpen, onClose }: Props) {
                                 ${
                                   resending
                                     ? "text-zinc-600 cursor-not-allowed"
-                                    : "text-[#9B7BFF] underline underline-offset-2 hover:text-[#B794F4] cursor-pointer"
+                                    : "text-[#9B7BFF] underline underline-offset-2 hover:text-[#B794F4]"
                                 }`}
                   >
                     {resending ? "재전송 중…" : "재전송"}

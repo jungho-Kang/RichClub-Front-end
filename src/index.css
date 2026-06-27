@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@layer base {
+  button {
+    cursor: pointer;
+  }
+  a {
+    cursor: pointer;
+  }
+}
+
 /* 스크롤바 */
 * {
   scrollbar-width: thin;

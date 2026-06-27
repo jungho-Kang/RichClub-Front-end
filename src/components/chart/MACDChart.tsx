@@ -34,6 +34,7 @@ const MACDChart = () => {
     priceScaleWidth,
     visibleRange,
     setVisibleRange,
+    candleDateRange,
   } = useChartStore();
 
   // ================= API =================
@@ -46,23 +47,31 @@ const MACDChart = () => {
 
       const raw: MACDData[] = res.data.data ?? [];
 
-      // 날짜 기준 중복 제거 (마지막 값 유지) 후 오름차순 정렬
       const deduped = Object.values(
         raw.reduce<Record<string, MACDData>>((acc, item) => {
-          acc[item.date] = item; // 같은 날짜면 나중 값으로 덮어씀
+          acc[item.date] = item;
           return acc;
         }, {}),
       ).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
-      setData(deduped);
+      // 캔들 날짜 범위로 필터링
+      const filtered = candleDateRange
+        ? deduped.filter(
+            d => d.date >= candleDateRange.from && d.date <= candleDateRange.to,
+          )
+        : deduped;
+      console.log("~~~~~~~~~~~~~~~~~~~~~~~", filtered);
+
+      setData(filtered);
     } catch (err) {
       console.log(err);
     }
   };
 
   useEffect(() => {
+    if (!candleDateRange) return; // 캔들 범위 올 때까지 대기
     getMACDData();
-  }, [selectedStock]);
+  }, [selectedStock, candleDateRange]);
 
   // ================= CHART =================
   useEffect(() => {
@@ -161,7 +170,14 @@ const MACDChart = () => {
       setVisibleRange(range);
     });
 
-    if (!visibleRange) {
+    if (visibleRange) {
+      chart.timeScale().setVisibleLogicalRange(visibleRange);
+    } else if (candleDateRange) {
+      chart.timeScale().setVisibleRange({
+        from: candleDateRange.from as any,
+        to: candleDateRange.to as any,
+      });
+    } else {
       chart.timeScale().fitContent();
     }
 

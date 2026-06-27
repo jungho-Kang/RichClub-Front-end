@@ -88,7 +88,7 @@ const NewsList = () => {
                 href={news[0].originallink}
                 target="_blank"
                 rel="noreferrer"
-                className="block cursor-pointer px-4 py-3 mb-2 rounded-lg border-l-2 border-blue-500 pl-4 bg-linear-to-r from-[#1a1b20] to-transparent hover:pl-5 hover:bg-[#1a1b20] transition-all group"
+                className="block px-4 py-3 mb-2 rounded-lg border-l-2 border-blue-500 pl-4 bg-linear-to-r from-[#1a1b20] to-transparent hover:pl-5 hover:bg-[#1a1b20] transition-all group"
               >
                 <div className="text-sm font-semibold text-zinc-100 leading-snug">
                   {stripHtml(news[0].title)}
@@ -107,7 +107,7 @@ const NewsList = () => {
                   href={n.originallink}
                   target="_blank"
                   rel="noreferrer"
-                  className="block cursor-pointer px-3 py-2 hover:bg-[#1a1b20] transition group"
+                  className="block px-3 py-2 hover:bg-[#1a1b20] transition group"
                 >
                   <div className="text-sm text-zinc-300 group-hover:text-white line-clamp-1">
                     {stripHtml(n.title)}

@@ -34,6 +34,7 @@ const RSIChart = () => {
     priceScaleWidth,
     visibleRange,
     setVisibleRange,
+    candleDateRange,
   } = useChartStore();
 
   const calcRSISignal = (data: number[], period: number) => {
@@ -59,30 +60,40 @@ const RSIChart = () => {
     try {
       const res = await axios.get(
         `/api/v1/stock/chart/rsi/${selectedStock.stock_code}`,
-        {
-          params: { period: "all" },
-        },
+        { params: { period: "all" } },
       );
-      const data: RSIData[] = res.data.data;
-      // signalValues 계산해서 dataState에 넣기
-      if (data) {
-        const rsiValues = data.map(d => d.rsi);
+      const raw: RSIData[] = res.data.data;
+
+      if (raw) {
+        // 날짜 기준 중복 제거 (같은 날짜면 나중 값으로 덮어씀) 후 오름차순 정렬
+        const deduped = Object.values(
+          raw.reduce<Record<string, RSIData>>((acc, item) => {
+            acc[item.date] = item;
+            return acc;
+          }, {}),
+        ).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+        // RSI 시그널(9일 이동평균) 계산
+        const rsiValues = deduped.map(d => d.rsi);
         const signalValues = calcRSISignal(rsiValues, 9);
 
-        const merged = data.map((d, i, arr) => {
+        // RSI 이탈 신호 계산 (RSI가 70 위에서 아래로 내려올 때 매도 신호)
+        const merged = deduped.map((d, i, arr) => {
           const prev = arr[i - 1];
-
-          // ================= 핵심 추가 로직 =================
           const rsiBreakDown =
             prev?.rsi != null && d.rsi != null && prev.rsi >= 70 && d.rsi < 70;
-
-          return {
-            ...d,
-            signal: signalValues[i],
-            rsiBreakDown,
-          };
+          return { ...d, signal: signalValues[i], rsiBreakDown };
         });
-        setData(merged);
+
+        // 캔들 날짜 범위로 필터링 (캔들과 날짜 동기화)
+        const filtered = candleDateRange
+          ? merged.filter(
+              d =>
+                d.date >= candleDateRange.from && d.date <= candleDateRange.to,
+            )
+          : merged;
+
+        setData(filtered);
       }
     } catch (err) {
       console.log(err);
@@ -90,8 +101,9 @@ const RSIChart = () => {
   };
 
   useEffect(() => {
+    if (!candleDateRange) return;
     getRSIData();
-  }, [selectedStock]);
+  }, [selectedStock, candleDateRange]);
 
   // ================= 차트 =================
   useEffect(() => {
@@ -186,7 +198,14 @@ const RSIChart = () => {
       setVisibleRange(range);
     });
 
-    if (!visibleRange) {
+    if (visibleRange) {
+      chart.timeScale().setVisibleLogicalRange(visibleRange);
+    } else if (candleDateRange) {
+      chart.timeScale().setVisibleRange({
+        from: candleDateRange.from as any,
+        to: candleDateRange.to as any,
+      });
+    } else {
       chart.timeScale().fitContent();
     }
 

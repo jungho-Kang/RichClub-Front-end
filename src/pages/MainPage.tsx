@@ -75,7 +75,7 @@ export default function MainPage() {
             <button
               onClick={() => setIsTradeHistoryOpen(true)}
               className="w-full flex items-center justify-center gap-2 bg-[#141519] border border-[#26272c] 
-                        hover:border-zinc-600 rounded-2xl py-3 text-sm font-medium text-zinc-300 transition-colors cursor-pointer"
+                        hover:border-zinc-600 rounded-2xl py-3 text-sm font-medium text-zinc-300 transition-colors"
             >
               <PenLine className="w-4 h-4" />
               매매일지 작성

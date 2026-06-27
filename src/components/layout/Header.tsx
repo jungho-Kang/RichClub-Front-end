@@ -68,7 +68,6 @@ const Header = () => {
   const fetchSubscription = async () => {
     try {
       const res = await axios.get("/api/v1/subscription");
-      console.log(res.data);
       setCurrentPlan(res.data.plan);
     } catch {
       setCurrentPlan(null);
@@ -137,7 +136,7 @@ const Header = () => {
             </div>
             <button
               onClick={() => setSubOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors"
               style={{
                 borderColor: planColor.dot + "66",
                 backgroundColor: planColor.dot + "18",
@@ -161,7 +160,7 @@ const Header = () => {
               removeCookie("accessToken");
               postLogout();
             }}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5 transition-all cursor-pointer"
+            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/15 text-zinc-300 hover:bg-white/5 transition-all"
           >
             로그아웃
           </button>

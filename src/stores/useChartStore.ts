@@ -10,6 +10,7 @@ interface ChartState {
   hoveredDate: string | null;
   priceScaleWidth: number;
   visibleRange: any;
+  candleDateRange: { from: string; to: string } | null;
 
   toggleMA5: () => void;
   toggleMA20: () => void;
@@ -20,8 +21,8 @@ interface ChartState {
   setHoveredDate: (date: string | null) => void;
   setPriceScaleWidth: (width: number) => void;
   setVisibleRange: (range: any) => void;
-  visibleDateRange: { from: string; to: string } | null;
-  setVisibleDateRange: (range: { from: string; to: string } | null) => void;
+  setCandleDateRange: (range: { from: string; to: string } | null) => void;
+  resetChart: () => void;
 }
 
 export const useChartStore = create<ChartState>(set => ({
@@ -33,6 +34,7 @@ export const useChartStore = create<ChartState>(set => ({
   hoveredDate: null,
   priceScaleWidth: 80, // 기본 최소 너비 설정
   visibleRange: null,
+  candleDateRange: null,
 
   toggleMA5: () => set(state => ({ showMA5: !state.showMA5 })),
   toggleMA20: () => set(state => ({ showMA20: !state.showMA20 })),
@@ -46,6 +48,6 @@ export const useChartStore = create<ChartState>(set => ({
       priceScaleWidth: Math.max(state.priceScaleWidth, width),
     })),
   setVisibleRange: range => set({ visibleRange: range }),
-  visibleDateRange: null,
-  setVisibleDateRange: range => set({ visibleDateRange: range }),
+  setCandleDateRange: range => set({ candleDateRange: range }),
+  resetChart: () => set({ visibleRange: null, candleDateRange: null }),
 }));

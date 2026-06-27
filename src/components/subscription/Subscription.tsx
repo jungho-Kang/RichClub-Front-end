@@ -211,7 +211,7 @@ export default function Subscription({
           <span className="text-base font-semibold text-white">요금제</span>
           <button
             onClick={onClose}
-            className="text-zinc-500 hover:text-white transition-colors cursor-pointer text-lg leading-none"
+            className="text-zinc-500 hover:text-white transition-colors text-lg leading-none"
           >
             ✕
           </button>
@@ -224,7 +224,7 @@ export default function Subscription({
               <button
                 key={c}
                 onClick={() => setCycle(c)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors
                   ${cycle === c ? "bg-[#2a2d36] text-white" : "text-zinc-500 hover:text-zinc-300"}`}
               >
                 {c === "monthly" ? "월간" : "연간"}
@@ -358,7 +358,7 @@ export default function Subscription({
                         plan.highlight ? { background: plan.highlight } : {}
                       }
                       className={`w-full py-2 text-xs font-semibold rounded-lg text-white transition-opacity
-                        hover:opacity-85 disabled:opacity-50 cursor-pointer
+                        hover:opacity-85 disabled:opacity-50
                         ${!plan.highlight ? "bg-[#2a2d36] hover:bg-[#3a3d46]" : ""}`}
                     >
                       {currentPlan ? "변경하기" : "구독 신청하기"}

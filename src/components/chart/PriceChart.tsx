@@ -42,6 +42,8 @@ const PriceChart = () => {
     setPriceScaleWidth,
     visibleRange,
     setVisibleRange,
+    setCandleDateRange,
+    resetChart,
   } = useChartStore();
 
   // ================= API =================
@@ -69,6 +71,7 @@ const PriceChart = () => {
   };
 
   useEffect(() => {
+    resetChart();
     getCandleData();
     getSignalData();
   }, [selectedStock]);
@@ -163,6 +166,9 @@ const PriceChart = () => {
         close: item.close,
       })),
     );
+
+    const dates = candleData.map(d => d.datetime.slice(0, 10));
+    setCandleDateRange({ from: dates[0], to: dates[dates.length - 1] });
 
     // Buy / Sell 마커 세팅 로직
     if (signalData.length > 0) {
@@ -319,7 +325,14 @@ const PriceChart = () => {
       ctx?.clearRect(0, 0, overlay.width, overlay.height);
     }
 
-    chart.timeScale().fitContent();
+    const to = dates[dates.length - 1];
+    const toDate = new Date(to);
+    toDate.setDate(toDate.getDate() - 90);
+    const from = toDate.toISOString().slice(0, 10);
+    chart.timeScale().setVisibleRange({
+      from: from as any,
+      to: to as any,
+    });
 
     return () => {
       clearTimeout(timer); // 타이머 제거

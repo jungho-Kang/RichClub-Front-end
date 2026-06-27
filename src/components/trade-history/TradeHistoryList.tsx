@@ -29,7 +29,6 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
   const getTradeHistory = async () => {
     try {
       const res = await axios.get("/api/v1/trade-log");
-      console.log(res.data);
       setTradeData(res.data);
     } catch (error) {
       console.log(error);
@@ -121,7 +120,7 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
                 <div className="flex justify-end mt-2">
                   <button
                     onClick={() => handleDelete(e.id)}
-                    className="flex items-center gap-1 text-[11px] text-zinc-500 border border-white/10 rounded px-2 py-1 hover:text-red-400 hover:border-red-400/30 transition-colors cursor-pointer"
+                    className="flex items-center gap-1 text-[11px] text-zinc-500 border border-white/10 rounded px-2 py-1 hover:text-red-400 hover:border-red-400/30 transition-colors"
                   >
                     <Trash2 className="w-3 h-3" />
                     삭제

@@ -68,7 +68,7 @@ const Login = ({ onForgotPassword }: LoginProps) => {
           <button
             type="button"
             onClick={onForgotPassword}
-            className="text-[12px] text-gray-600 hover:text-gray-400 cursor-pointer
+            className="text-[12px] text-gray-600 hover:text-gray-400
                transition-colors self-end focus-visible:outline-none
                focus-visible:ring-2 focus-visible:ring-[#7C5CFF] rounded-sm"
           >
@@ -77,7 +77,7 @@ const Login = ({ onForgotPassword }: LoginProps) => {
           <button
             type="submit"
             disabled={!isValid || loading}
-            className="w-full py-3.5 rounded-lg bg-[#6F4CDB] hover:bg-[#5C3CCF] text-white font-semibold disabled:opacity-50 transition cursor-pointer"
+            className="w-full py-3.5 rounded-lg bg-[#6F4CDB] hover:bg-[#5C3CCF] text-white font-semibold disabled:opacity-50 transition"
           >
             {loading ? "로그인 중..." : "로그인"}
           </button>

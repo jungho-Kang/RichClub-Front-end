@@ -46,7 +46,7 @@ function LoginPage() {
               className="text-[#9B7BFF] underline underline-offset-2
                          hover:text-[#B794F4] transition-colors duration-200
                          focus-visible:outline-none focus-visible:rounded-sm
-                         focus-visible:ring-2 focus-visible:ring-[#7C5CFF] cursor-pointer"
+                         focus-visible:ring-2 focus-visible:ring-[#7C5CFF]"
             >
               회원가입
             </button>
