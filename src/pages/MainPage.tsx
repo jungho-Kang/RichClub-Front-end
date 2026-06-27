@@ -67,7 +67,7 @@ export default function MainPage() {
           </div>
 
           {/* 우측 사이드바 */}
-          <div className="flex flex-col gap-4 min-w-0 h-full">
+          <div className="flex flex-col gap-4 min-w-0">
             {/* AI 예측 종목 리스트 */}
             <AIStockList won={won} pct={pct} />
             <WinrateTest />

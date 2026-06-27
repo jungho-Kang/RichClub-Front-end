@@ -149,7 +149,9 @@ const WinrateTest = () => {
       {/* 헤더 */}
       <div>
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-white">AI 백테스트</span>
+          <span className="text-sm font-semibold text-white">
+            AI 매매 시뮬레이터
+          </span>
           {stock_name && (
             <span className="text-[11px] text-zinc-500">
               — {stock_name} {stock_code}

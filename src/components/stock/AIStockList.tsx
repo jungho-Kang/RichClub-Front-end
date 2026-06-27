@@ -62,7 +62,7 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
       : watchlist?.length;
 
   return (
-    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 flex flex-col flex-1">
+    <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 flex flex-col h-82">
       {/* 뷰 토글 (AI예측 / 관심종목) */}
       <div className="flex gap-1 bg-[#0f1013] p-1 rounded-lg mb-3">
         {(["AI예측", "관심종목"] as ViewType[]).map(v => (
@@ -106,7 +106,7 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
       </div>
 
       {/* 리스트 */}
-      <div className="space-y-3 overflow-y-auto max-h-240 pr-1 scrollbar-thumb-amber-50">
+      <div className="space-y-3 overflow-y-auto min-h-0 pr-1 scrollbar-thumb-amber-50">
         {view === "AI예측" ? (
           aiList?.length ? (
             aiList.map((h, i) => (
