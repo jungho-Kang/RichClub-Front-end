@@ -1,30 +1,25 @@
 import axios from "axios";
 import dayjs from "dayjs";
+import { Pencil, Plus, Trash, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
 
-import type { Step, TradeHistory } from "@/types/trade-history";
 import { BADGE } from "@/constants/tradeStyles";
 import { alertDanger, alertError, alertSuccess } from "@/lib/swal";
+import type { Step, TradeData } from "@/types/trade-history";
 import TradeHistoryHeader from "./TradeHistoryHeader";
 
 interface TradeHistoryListProps {
   onClose: () => void;
   setStep: React.Dispatch<React.SetStateAction<Step>>;
+  setSelectedLog: React.Dispatch<React.SetStateAction<TradeData | null>>; // 변경
 }
 
-interface TradeData extends TradeHistory {
-  id: string;
-  total_amount: number;
-  traded_at: string;
-}
-
-const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
+const TradeHistoryList = ({
+  onClose,
+  setStep,
+  setSelectedLog,
+}: TradeHistoryListProps) => {
   const [tradeData, setTradeData] = useState<TradeData[]>([]);
-
-  const goToForm = () => {
-    setStep("form");
-  };
 
   const getTradeHistory = async () => {
     try {
@@ -42,7 +37,7 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
   const handleDelete = async (id: string) => {
     const result = await alertDanger(
       "삭제하시겠어요?",
-      "삭제된 기록은 복구할 수 없습니다.",
+      "삭제된 기록은 휴지통으로 이동됩니다.",
       "삭제",
     );
 
@@ -50,13 +45,17 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
 
     try {
       await deleteTradeHistory(id);
-
       setTradeData(prev => prev.filter(item => item.id !== id));
-
-      await alertSuccess("삭제 완료", "기록이 정상적으로 삭제되었습니다.");
+      await alertSuccess("삭제 완료", "기록이 휴지통으로 이동되었습니다.");
     } catch (error) {
       await alertError("삭제 실패", "잠시 후 다시 시도해주세요.");
     }
+  };
+
+  // 수정 버튼 클릭 시 TradeData 저장 후 edit step으로 이동
+  const handleEdit = (item: TradeData) => {
+    setSelectedLog(item);
+    setStep("edit");
   };
 
   useEffect(() => {
@@ -71,13 +70,26 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
           <span className="text-xs text-zinc-500">
             총 {tradeData.length}건의 기록
           </span>
-          <button
-            onClick={goToForm}
-            className="flex items-center gap-1.5 text-xs text-zinc-300 border border-white/18 rounded-md px-2.5 py-1.5 hover:bg-white/7 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />새 기록
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* 휴지통 이동 버튼 추가 */}
+            <button
+              onClick={() => setStep("trash")}
+              className="flex items-center gap-1.5 text-xs text-zinc-500 border border-white/18 rounded-md px-2.5 py-1.5 hover:bg-white/7 hover:text-zinc-300 transition-colors"
+            >
+              <Trash className="w-3.5 h-3.5" />
+              휴지통
+            </button>
+
+            <button
+              onClick={() => setStep("form")}
+              className="flex items-center gap-1.5 text-xs text-zinc-300 border border-white/18 rounded-md px-2.5 py-1.5 hover:bg-white/7 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />새 기록
+            </button>
+          </div>
         </div>
+
         {tradeData.length === 0 ? (
           <div className="text-center text-zinc-600 text-sm py-10">
             기록이 없습니다.
@@ -100,12 +112,9 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
                       {e.stock_name}
                     </span>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-600">
-                      {dayjs(e.traded_at).format("YYYY-MM-DD")}
-                    </span>
-                  </div>
+                  <span className="text-xs text-zinc-600">
+                    {dayjs(e.traded_at).format("YYYY-MM-DD")}
+                  </span>
                 </div>
 
                 {(e.price > 0 || e.quantity > 0) && (
@@ -116,8 +125,16 @@ const TradeHistoryList = ({ onClose, setStep }: TradeHistoryListProps) => {
                 <p className="text-xs text-zinc-400 leading-relaxed">
                   {e.memo}
                 </p>
-                {/* 하단: 삭제 버튼 */}
-                <div className="flex justify-end mt-2">
+
+                {/* 수정 + 삭제 버튼 */}
+                <div className="flex justify-end gap-1.5 mt-2">
+                  <button
+                    onClick={() => handleEdit(e)}
+                    className="flex items-center gap-1 text-[11px] text-zinc-500 border border-white/10 rounded px-2 py-1 hover:text-blue-400 hover:border-blue-400/30 transition-colors"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    수정
+                  </button>
                   <button
                     onClick={() => handleDelete(e.id)}
                     className="flex items-center gap-1 text-[11px] text-zinc-500 border border-white/10 rounded px-2 py-1 hover:text-red-400 hover:border-red-400/30 transition-colors"

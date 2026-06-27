@@ -1,11 +1,16 @@
 import axios from "axios";
-import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { alertError, alertSuccess } from "@/lib/swal";
 import { BADGE } from "@/constants/tradeStyles";
-import type { Step, TradeHistory, TradeType } from "@/types/trade-history";
+import type {
+  Step,
+  TradeData,
+  TradeHistory,
+  TradeType,
+} from "@/types/trade-history";
 import TradeHistoryHeader from "./TradeHistoryHeader";
 
 interface Stock {
@@ -13,46 +18,47 @@ interface Stock {
   stock_name: string;
 }
 
-interface TradeHistoryFormProps {
+interface TradeHistoryEditFormProps {
   onClose: () => void;
   setStep: React.Dispatch<React.SetStateAction<Step>>;
+  log: TradeData;
 }
 
 const TRADE_TYPES: TradeType[] = ["매수", "매도", "관망"];
 
-const InitData = [
-  {
-    stock_code: "005930",
-    stock_name: "삼성전자",
-  },
-];
-
-const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
+const TradeHistoryEditForm = ({
+  onClose,
+  setStep,
+  log,
+}: TradeHistoryEditFormProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [stocks, setStocks] = useState<Stock[]>(InitData);
+  const [stocks, setStocks] = useState<Stock[]>([]);
 
   const {
     register,
     setValue,
     watch,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<TradeHistory>({
     defaultValues: {
-      stock_code: stocks[0].stock_code,
-      stock_name: stocks[0].stock_name,
-      trade_type: "매수",
+      stock_code: log.stock_code,
+      stock_name: log.stock_name,
+      trade_type: log.trade_type,
+      price: log.price,
+      quantity: log.quantity,
+      memo: log.memo,
     },
   });
 
   const selectedStockName = watch("stock_name");
   const type = watch("trade_type");
 
+  // 종목 드롭다운 목록 조회
   const getStocks = async () => {
     try {
       const res = await axios.get("/api/v1/stock/list");
-      const sorted = [...res.data].sort((a, b) =>
+      const sorted = [...res.data].sort((a: Stock, b: Stock) =>
         a.stock_name.localeCompare(b.stock_name),
       );
       setStocks(sorted);
@@ -61,38 +67,31 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
     }
   };
 
-  const postTradeHistory = async (data: TradeHistory) => {
+  // 매매 기록 수정 요청
+  const patchTradeHistory = async (data: TradeHistory) => {
+    await axios.patch(`/api/v1/trade-log/${log.id}`, data);
+  };
+
+  // 폼 제출 성공 시
+  const onSubmit = async (data: TradeHistory) => {
     try {
-      await axios.post("/api/v1/trade-log", data);
-      await alertSuccess("저장 완료", "매매일지가 저장되었습니다.");
+      await patchTradeHistory(data);
+      await alertSuccess("수정 완료", "매매일지가 수정되었습니다.");
+      setStep("list");
     } catch (error) {
-      console.log(error);
+      await alertError("수정 실패", "잠시 후 다시 시도해주세요.");
     }
   };
 
-  const onSubmit = (data: TradeHistory) => {
-    postTradeHistory(data);
-
-    reset({
-      stock_code: stocks[0].stock_code,
-      stock_name: stocks[0].stock_name,
-      trade_type: "매수",
-      price: 0,
-      quantity: 0,
-      memo: "",
-    });
-
-    setStep("list");
-  };
-
+  // 폼 유효성 검사 실패 시
   const onError = () => {
     const messages: string[] = [];
     if (errors.price) messages.push("· " + errors.price.message);
     if (errors.quantity) messages.push("· " + errors.quantity.message);
-
     alertError("입력 오류", messages.join("\n") || "필수 항목을 입력해주세요.");
   };
 
+  // 마운트 시 종목 목록 조회
   useEffect(() => {
     getStocks();
   }, []);
@@ -103,10 +102,14 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
 
       <form onSubmit={handleSubmit(onSubmit, onError)} className="flex-1">
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-          {/* 종목 */}
+          {/* 수정 모드 안내 배지 */}
+          <div className="flex items-center gap-1.5 text-xs text-amber-400/80 bg-amber-400/8 border border-amber-400/15 rounded-lg px-3 py-2">
+            <span>기존 기록을 수정하고 있습니다.</span>
+          </div>
+
+          {/* 종목 드롭다운 */}
           <div>
             <label className="block text-xs text-zinc-400 mb-1.5">종목</label>
-
             <div className="relative">
               <button
                 type="button"
@@ -115,18 +118,17 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
               >
                 <span>{selectedStockName}</span>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
+              {/* 드롭다운 목록 */}
               {isOpen && (
                 <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-[#141519] border border-white/12 rounded-lg shadow-lg">
                   {stocks.map(stock => (
                     <button
                       type="button"
-                      key={stock.stock_name}
+                      key={stock.stock_code}
                       onClick={() => {
                         setValue("stock_code", stock.stock_code);
                         setValue("stock_name", stock.stock_name);
@@ -147,8 +149,7 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
             <label className="block text-xs text-zinc-400 mb-1.5">
               매매 구분
             </label>
-
-            <div className="flex gap-4 overflow-hidden">
+            <div className="flex gap-4">
               {TRADE_TYPES.map(t => (
                 <button
                   key={t}
@@ -166,7 +167,7 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
             </div>
           </div>
 
-          {/* 가격 / 수량 - validate 추가 */}
+          {/* 체결가 / 수량 */}
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-xs text-zinc-400 mb-1.5">
@@ -217,12 +218,11 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
             </div>
           </div>
 
-          {/* 메모 */}
+          {/* 매매 근거 메모 */}
           <div>
             <label className="block text-xs text-zinc-400 mb-1.5">
               매매 근거 / 메모
             </label>
-
             <textarea
               rows={3}
               {...register("memo")}
@@ -232,24 +232,20 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
           </div>
         </div>
 
-        {/* 버튼 */}
+        {/* 취소 / 수정 저장 버튼 */}
         <div className="flex gap-2 px-4 pb-4 pt-3 border-t border-white/8">
           <button
             type="button"
-            onClick={() => {
-              reset();
-              setStep("list");
-            }}
+            onClick={() => setStep("list")}
             className="flex-1 py-2 text-sm text-zinc-400 border border-white/15 rounded-lg hover:bg-white/5 transition-colors"
           >
             취소
           </button>
-
           <button
             type="submit"
             className="flex-1 py-2 text-sm font-medium text-zinc-200 bg-white/10 border border-white/15 rounded-lg hover:bg-white/16 transition-colors"
           >
-            저장
+            수정 저장
           </button>
         </div>
       </form>
@@ -257,4 +253,4 @@ const TradeHistoryForm = ({ onClose, setStep }: TradeHistoryFormProps) => {
   );
 };
 
-export default TradeHistoryForm;
+export default TradeHistoryEditForm;
