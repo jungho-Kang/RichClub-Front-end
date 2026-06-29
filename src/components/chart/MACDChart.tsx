@@ -60,7 +60,6 @@ const MACDChart = () => {
             d => d.date >= candleDateRange.from && d.date <= candleDateRange.to,
           )
         : deduped;
-      console.log("~~~~~~~~~~~~~~~~~~~~~~~", filtered);
 
       setData(filtered);
     } catch (err) {

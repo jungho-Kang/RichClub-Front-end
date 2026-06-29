@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useState, useEffect, useCallback } from "react";
 import type {
   UsePerformanceParams,
@@ -9,15 +10,6 @@ import type {
 } from "@/types/performance";
 
 const BASE_URL = "/api/v1/market";
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    localStorage.getItem("token") ?? sessionStorage.getItem("token") ?? "";
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
 
 export function usePerformance({
   modelId,
@@ -33,18 +25,17 @@ export function usePerformance({
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams();
+      const params: Record<string, string> = {};
       if (year != null) {
-        params.set("year", String(year));
+        params.year = String(year);
       } else {
-        params.set("period", period ?? "3m");
+        params.period = period ?? "3m";
       }
-      const res = await fetch(`${BASE_URL}/performance/${modelId}?${params}`, {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: PerformanceData = await res.json();
-      setData(json);
+      const res = await axios.get<PerformanceData>(
+        `${BASE_URL}/performance/${modelId}`,
+        { params },
+      );
+      setData(res.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "알 수 없는 오류");
     } finally {
@@ -74,17 +65,17 @@ export function useSimulation({
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
+      const params: Record<string, string> = {
         principal: String(principal),
         max_stocks: String(maxStocks),
         ...(year != null ? { year: String(year) } : {}),
-      });
-      const res = await fetch(`${BASE_URL}/simulation/${modelId}?${params}`, {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: SimulationData = await res.json();
-      setData(json);
+      };
+      const res = await axios.get<SimulationData>(
+        `${BASE_URL}/simulation/${modelId}`,
+        { params },
+      );
+      console.log(res.data);
+      setData(res.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "알 수 없는 오류");
     } finally {
