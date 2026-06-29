@@ -1,4 +1,3 @@
-// hooks/usePerformance.ts
 import { useState, useEffect, useCallback } from "react";
 import type {
   UsePerformanceParams,
