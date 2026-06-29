@@ -32,11 +32,6 @@ const CALC_MODES: { value: CalcMode; label: string; desc: string }[] = [
     desc: "완료된 모든 거래의 수익률을 단순 합산합니다.",
   },
   { value: "avg", label: "평균", desc: "거래 1건당 평균 수익률입니다." },
-  {
-    value: "compound",
-    label: "복리",
-    desc: "매 거래 후 수익을 재투자한다고 가정한 누적 수익률입니다.",
-  },
 ];
 
 const PRINCIPAL_PRESETS = [1_000_000, 5_000_000, 10_000_000, 50_000_000];
@@ -80,8 +75,7 @@ function calcReturn(trades: Trade[], mode: CalcMode): number {
   if (mode === "sum") return returns.reduce((a, b) => a + b, 0);
   if (mode === "avg")
     return returns.reduce((a, b) => a + b, 0) / returns.length;
-  if (mode === "compound")
-    return returns.reduce((acc, r) => acc * (1 + r / 100), 1) * 100 - 100;
+
   return 0;
 }
 
