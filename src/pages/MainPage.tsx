@@ -1,10 +1,6 @@
 import { PenLine } from "lucide-react";
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-import { useAuthStore } from "@/stores/useAuthStore";
-import { getCookie } from "@/utils/cookie";
+import { useState } from "react";
 
 import ChartControls from "@/components/chart/ChartControls";
 import MACDChart from "@/components/chart/MACDChart";
@@ -23,20 +19,12 @@ const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
 // 퍼센트 포맷
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
-export default function MainPage() {
-  const navigate = useNavigate();
+interface MainPageProps {
+  accessToken?: string;
+}
+
+export default function MainPage({ accessToken }: MainPageProps) {
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
-  const { login } = useAuthStore();
-
-  const accessToken = getCookie("accessToken");
-
-  useEffect(() => {
-    if (accessToken) {
-      login();
-    } else {
-      navigate("/auth", { replace: true });
-    }
-  }, [accessToken]);
 
   // accessToken이 없으면 화면 지우기
   if (!accessToken) return;

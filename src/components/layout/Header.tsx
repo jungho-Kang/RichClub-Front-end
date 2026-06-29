@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { alertSuccess } from "@/lib/swal";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getCookie, removeCookie } from "@/utils/cookie";
@@ -60,10 +61,30 @@ const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const [subOpen, setSubOpen] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [perfReturn, setPerfReturn] = useState<number | null>(null);
+  const [perfLoading, setPerfLoading] = useState(true);
 
   const { logout } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const accessToken = getCookie("accessToken");
+
+  const fetchPerformance = async () => {
+    setPerfLoading(true);
+    try {
+      const res = await axios.get(
+        "/api/v1/market/performance/ju-model-v2?period=6m",
+      );
+      const trades: { return_pct: number }[] = res.data.trades ?? [];
+      const total = trades.reduce((acc, t) => acc + (t.return_pct ?? 0), 0);
+      setPerfReturn(total);
+    } catch {
+      setPerfReturn(null);
+    } finally {
+      setPerfLoading(false);
+    }
+  };
 
   const fetchSubscription = async () => {
     try {
@@ -98,9 +119,12 @@ const Header = () => {
     if (accessToken) {
       fetchUserInfo();
       fetchSubscription();
+      fetchPerformance();
     } else {
       setUser(null);
       setCurrentPlan(null);
+      setPerfReturn(null);
+      setPerfLoading(false);
     }
   }, [accessToken]);
 
@@ -111,7 +135,7 @@ const Header = () => {
     <>
       <header className="flex items-center justify-between bg-[#141519] border border-[#26272c] rounded-2xl px-5 py-3">
         <div className="flex items-center gap-3">
-          <div>
+          <div className="cursor-pointer" onClick={() => navigate("/")}>
             <h2 className="text-sm font-semibold tracking-tight text-white">
               Rich
               <span className="bg-linear-to-r from-[#7C5CFF] to-[#B794F4] bg-clip-text text-transparent">
@@ -122,9 +146,36 @@ const Header = () => {
               AI 매매 시그널
             </div>
           </div>
+
+          <div className="w-px h-4 bg-white/10" />
+
+          <button
+            onClick={() => navigate("/ai-performance")}
+            className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+              location.pathname === "/ai-performance"
+                ? "bg-white/10"
+                : "hover:bg-white/10"
+            }`}
+          >
+            <span className="text-[11px] text-zinc-500">최근 6개월</span>
+            {perfLoading ? (
+              <span className="text-xs text-zinc-700 animate-pulse">••••</span>
+            ) : perfReturn != null ? (
+              <span
+                className={`text-xs font-bold transition-all group-hover:brightness-125 ${
+                  perfReturn >= 0 ? "text-emerald-400" : "text-red-400"
+                }`}
+              >
+                {perfReturn >= 0 ? "+" : ""}
+                {perfReturn.toFixed(2)}%
+              </span>
+            ) : (
+              <span className="text-xs text-zinc-600">—</span>
+            )}
+          </button>
         </div>
 
-        <SearchBar />
+        {location.pathname !== "/ai-performance" && <SearchBar />}
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
