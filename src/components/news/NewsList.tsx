@@ -43,6 +43,8 @@ const NewsList = () => {
           },
         });
 
+        console.log(res.data);
+
         setNews(res.data.items || []);
       } catch (e) {
         console.error(e);

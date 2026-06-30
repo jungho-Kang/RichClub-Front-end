@@ -11,10 +11,10 @@ import SimulationSection from "@/components/performance/SimulationSection";
 
 /* ── 상수 ── */
 const PERIODS: { value: Period; label: string }[] = [
-  { value: "1m", label: "1m" },
-  { value: "3m", label: "3m" },
-  { value: "6m", label: "6m" },
-  { value: "all", label: "all" },
+  { value: "1m", label: "1개월" },
+  { value: "3m", label: "3개월" },
+  { value: "6m", label: "6개월" },
+  { value: "all", label: "전체" },
 ];
 
 const YEARS = [2026, 2025, 2024, 2023, 2022, 2021] as const;
