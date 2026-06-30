@@ -49,8 +49,8 @@ export default function MainPage({ accessToken }: MainPageProps) {
             <div className="flex flex-col gap-3">
               {/* 가격 + 이동평균선 차트 */}
               <PriceChart />
-              <RSIChart />
               <MACDChart />
+              <RSIChart />
             </div>
           </div>
 
