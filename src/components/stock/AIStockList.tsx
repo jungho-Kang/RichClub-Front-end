@@ -20,7 +20,7 @@ interface AIStockListProps {
 
 const AIStockList = ({ won, pct }: AIStockListProps) => {
   const { isLogin } = useAuthStore();
-  const { setSelectedStock } = useStockStore();
+  const { setSelectedStock, selectedModel } = useStockStore();
   const { getWatchlist, watchlist, removeWatch } = useWatchlistStore();
 
   const [view, setView] = useState<ViewType>("AI예측");
@@ -33,8 +33,12 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
   const getAIData = async () => {
     try {
       const [buyRes, sellRes] = await Promise.all([
-        axios.get("/api/v1/stock/ai/today", { params: { signal: "매수" } }),
-        axios.get("/api/v1/stock/ai/today", { params: { signal: "매도" } }),
+        axios.get("/api/v1/stock/ai/today", {
+          params: { signal: "매수", model_id: selectedModel },
+        }),
+        axios.get("/api/v1/stock/ai/today", {
+          params: { signal: "매도", model_id: selectedModel },
+        }),
       ]);
       setBuyPredictions(buyRes.data);
       setSellPredictions(sellRes.data);

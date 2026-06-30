@@ -2,7 +2,7 @@
 
 > AI가 분석한 매수·매도 신호를 차트에서 바로 확인하고, 백테스트로 전략의 실제 수익률을 검증할 수 있는 주식 분석 서비스
 
-[RichClub 바로가기](https://rich-club-front-end.vercel.app/)
+[RichClub 바로가기](https://richclub.mayo.im/)
 
 <br>
 
@@ -178,13 +178,3 @@ src/
 ├── index.css
 └── main.tsx
 ```
-
-<br>
-
----
-
-## 예정 기능
-
-- AI 모델 실적 대시보드 (승률 / 수익률 / 거래횟수 요약)
-- AI 매매기록 상세보기
-- AI 보유 종목 현황 (매수 가격 / 수량 / 현재 잔액)

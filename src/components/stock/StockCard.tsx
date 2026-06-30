@@ -69,15 +69,29 @@ const StockCard = ({ won, pct }: StockCardProps) => {
 
   const { isWatched, removeWatch, addWatch, getWatchlist } =
     useWatchlistStore();
-  const { selectedStock } = useStockStore();
+  const { selectedStock, selectedModel, setSelectedModel, models, setModels } =
+    useStockStore();
+
+  // 모델 목록 조회
+  const getModels = async () => {
+    try {
+      const res = await axios.get("/api/v1/models");
+      const data = res.data;
+      setModels(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getStockDetail = async () => {
     try {
       const res = await axios.get("/api/v1/stock/ai/predictions", {
         params: {
           stock_name: selectedStock.stock_name,
+          model_id: selectedModel,
         },
       });
+      console.log(res.data);
       setData(res.data[0]);
     } catch (error) {
       console.log(error);
@@ -88,6 +102,11 @@ const StockCard = ({ won, pct }: StockCardProps) => {
     try {
       const res = await axios.get(
         `/api/v1/stock/ai/detail/${selectedStock.stock_code}`,
+        {
+          params: {
+            model_id: selectedModel,
+          },
+        },
       );
       setFeatureImportance(res.data.feature_importance);
     } catch (error) {
@@ -96,10 +115,14 @@ const StockCard = ({ won, pct }: StockCardProps) => {
   };
 
   useEffect(() => {
+    getModels();
+  }, []);
+
+  useEffect(() => {
     getStockDetail();
     getSignalDetail();
     getWatchlist();
-  }, [selectedStock]);
+  }, [selectedStock, selectedModel]);
 
   const toggleWatch = async () => {
     if (watchLoading || !data.stock_code) return;
@@ -131,11 +154,9 @@ const StockCard = ({ won, pct }: StockCardProps) => {
         if (value >= 1.2) {
           return "장기 추세 강세 유지";
         }
-
         if (value >= 1) {
           return "장기 추세 우상향";
         }
-
         return "장기 추세 약세";
 
       case "20/60일선 비율":
@@ -148,11 +169,9 @@ const StockCard = ({ won, pct }: StockCardProps) => {
         if (value >= 70) {
           return "RSI 과매수 구간";
         }
-
         if (value <= 30) {
           return "RSI 과매도 구간";
         }
-
         return "RSI 중립 구간";
 
       case "스토캐스틱 K":
@@ -160,11 +179,9 @@ const StockCard = ({ won, pct }: StockCardProps) => {
         if (value >= 80) {
           return "단기 과매수 신호";
         }
-
         if (value <= 20) {
           return "단기 과매도 신호";
         }
-
         return "단기 모멘텀 유지";
     }
   };
@@ -182,7 +199,7 @@ const StockCard = ({ won, pct }: StockCardProps) => {
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-5">
       {/* 상단 행 */}
       <div className="flex items-start justify-between mb-4">
-        {/* 왼쪽: 종목명 + 코드 + 시그널 뱃지를 같은 블록으로 */}
+        {/* 왼쪽: 종목명 + 코드 + 시그널 뱃지 */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold">{data.stock_name}</h2>
@@ -197,23 +214,49 @@ const StockCard = ({ won, pct }: StockCardProps) => {
           </span>
         </div>
 
-        <button
-          onClick={toggleWatch}
-          disabled={watchLoading || !data.stock_code}
-          className={`p-2 rounded-xl transition-all duration-150 active:scale-90
-                      disabled:opacity-30 disabled:cursor-not-allowed
-                      ${
-                        isWatched(data.stock_code)
-                          ? "text-amber-400 bg-amber-400/10 hover:bg-amber-400/20"
-                          : "text-zinc-500 bg-white/5 hover:text-amber-400 hover:bg-amber-400/10"
-                      }`}
-          title={isWatched(data.stock_code) ? "관심종목 해제" : "관심종목 등록"}
-        >
-          <Star
-            className="w-4 h-4"
-            fill={isWatched(data.stock_code) ? "currentColor" : "none"}
-          />
-        </button>
+        <div className="flex items-center gap-2">
+          {models.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-zinc-500">AI 모델</span>
+
+              <select
+                value={selectedModel}
+                onChange={e => setSelectedModel(e.target.value)}
+                className="bg-[#0f1013] border border-[#26272c] text-zinc-300 text-xs
+                           rounded-lg px-2.5 py-1.5 cursor-pointer
+                           hover:border-zinc-600 focus:outline-none focus:border-zinc-500
+                           transition-colors"
+              >
+                {models.map(model => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* 즐겨찾기 버튼 */}
+          <button
+            onClick={toggleWatch}
+            disabled={watchLoading || !data.stock_code}
+            className={`p-2 rounded-xl transition-all duration-150 active:scale-90
+                        disabled:opacity-30 disabled:cursor-not-allowed
+                        ${
+                          isWatched(data.stock_code)
+                            ? "text-amber-400 bg-amber-400/10 hover:bg-amber-400/20"
+                            : "text-zinc-500 bg-white/5 hover:text-amber-400 hover:bg-amber-400/10"
+                        }`}
+            title={
+              isWatched(data.stock_code) ? "관심종목 해제" : "관심종목 등록"
+            }
+          >
+            <Star
+              className="w-4 h-4"
+              fill={isWatched(data.stock_code) ? "currentColor" : "none"}
+            />
+          </button>
+        </div>
       </div>
 
       {/* 하단 행 */}

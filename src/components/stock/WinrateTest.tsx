@@ -85,7 +85,7 @@ const WinrateTest = () => {
   const [loading, setLoading] = useState(false);
   const [investment, setInvestment] = useState("1000000");
 
-  const { selectedStock } = useStockStore();
+  const { selectedStock, selectedModel } = useStockStore();
   const { stock_code, stock_name } = selectedStock;
 
   // GET /api/v1/market/winrate — AI 승률 테스트 (침체구간 제외)
@@ -103,6 +103,7 @@ const WinrateTest = () => {
         hold_days: 5, // number로
         ...(customStart && { start_date: customStart }),
         ...(customEnd && { end_date: customEnd }),
+        ...(mode !== "indicator" && { model_id: selectedModel }),
       };
 
       const res = await axios.get(MODE_CONFIG[mode].endpoint, { params });
@@ -116,7 +117,7 @@ const WinrateTest = () => {
 
   useEffect(() => {
     if (stock_code) fetchWinrate();
-  }, [stock_code, mode, period]);
+  }, [stock_code, mode, period, selectedModel]);
 
   const handleDateSearch = () => {
     const sd = toApiDate(startDate);

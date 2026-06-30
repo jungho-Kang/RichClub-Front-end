@@ -1,6 +1,4 @@
-// types/performance.types.ts
-
-export type ModelId = "ju-model-v2" | "seo-model-v1";
+export type ModelId = string;
 export type Period = "1m" | "3m" | "6m" | "all";
 export type CalcMode = "sum" | "avg" | "compound";
 

@@ -30,7 +30,7 @@ const PriceChart = () => {
   const [signalData, setSignalData] = useState<SignalData[]>([]);
 
   const { tooltip, setTooltip } = useTooltipStore();
-  const { selectedStock } = useStockStore();
+  const { selectedStock, selectedModel } = useStockStore();
   const {
     showMA5,
     showMA20,
@@ -62,7 +62,10 @@ const PriceChart = () => {
   const getSignalData = async () => {
     try {
       const res = await axios.get("/api/v1/stock/ai/predictions", {
-        params: { stock_name: selectedStock.stock_name },
+        params: {
+          stock_name: selectedStock.stock_name,
+          model_id: selectedModel,
+        },
       });
       setSignalData(res.data);
     } catch (error) {
