@@ -77,7 +77,7 @@ const PriceChart = () => {
     resetChart();
     getCandleData();
     getSignalData();
-  }, [selectedStock]);
+  }, [selectedStock, selectedModel]);
 
   useEffect(() => {
     if (!chartRef.current || !overlayRef.current || candleData.length === 0)
@@ -174,21 +174,23 @@ const PriceChart = () => {
     setCandleDateRange({ from: dates[0], to: dates[dates.length - 1] });
 
     // Buy / Sell 마커 세팅 로직
-    if (signalData.length > 0) {
+    if (signalData.length > 0 && candleData.length > 0) {
+      const validDates = new Set(candleData.map(d => d.datetime.slice(0, 10)));
+
       const markers = signalData
-        .filter(item => item.signal === "매수" || item.signal === "매도") // 관망 제외
+        .filter(item => item.signal === "매수" || item.signal === "매도")
+        .filter(item => validDates.has(item.predicted_at.slice(0, 10))) // 캔들 데이터 범위 안에 있는 것만
         .map(item => {
           const isBuy = item.signal === "매수";
           return {
-            time: item.predicted_at.slice(0, 10), // 'YYYY-MM-DD' 형식 맞추기
-            position: isBuy ? "belowBar" : "aboveBar", // 매수는 캔들 아래, 매도는 캔들 위
-            color: isBuy ? "#22c55e" : "#ef4444", // 녹색 / 빨간색
-            shape: isBuy ? "arrowUp" : "arrowDown", // 위/아래 화살표 기호
-            text: isBuy ? "BUY" : "SELL", // 표시될 텍스트
-            size: 1, // 마커 상대 크기 (기본값은 1)
+            time: item.predicted_at.slice(0, 10),
+            position: isBuy ? "belowBar" : "aboveBar",
+            color: isBuy ? "#22c55e" : "#ef4444",
+            shape: isBuy ? "arrowUp" : "arrowDown",
+            text: isBuy ? "BUY" : "SELL",
+            size: 1,
           } as const;
         })
-        // lightweight-charts 마커 또한 반드시 시간 오름차순 정렬이어야 에러가 안 납니다.
         .sort(
           (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
         );

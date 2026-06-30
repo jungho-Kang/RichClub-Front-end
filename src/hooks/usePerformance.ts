@@ -74,7 +74,6 @@ export function useSimulation({
         `${BASE_URL}/simulation/${modelId}`,
         { params },
       );
-      console.log(res.data);
       setData(res.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "알 수 없는 오류");

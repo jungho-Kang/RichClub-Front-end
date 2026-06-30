@@ -88,10 +88,9 @@ const StockCard = ({ won, pct }: StockCardProps) => {
       const res = await axios.get("/api/v1/stock/ai/predictions", {
         params: {
           stock_name: selectedStock.stock_name,
-          model_id: selectedModel,
+          // model_id: selectedModel,
         },
       });
-      console.log(res.data);
       setData(res.data[0]);
     } catch (error) {
       console.log(error);
