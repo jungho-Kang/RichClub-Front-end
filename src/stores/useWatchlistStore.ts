@@ -43,15 +43,13 @@ export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
 
   addWatch: async (stock_code, stock_name) => {
     try {
-      const res = await axios.post("/api/v1/watchlist", {
+      await axios.post("/api/v1/watchlist", {
         stock_code,
         stock_name,
         memo: "",
       });
-      set(state => ({
-        watchedCodes: new Set(state.watchedCodes).add(stock_code),
-        watchlist: [...state.watchlist, res.data],
-      }));
+
+      await get().getWatchlist();
     } catch (error) {
       console.log(error);
     }
@@ -63,14 +61,8 @@ export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
 
     try {
       await axios.delete(`/api/v1/watchlist/${item.id}`);
-      set(state => {
-        const next = new Set(state.watchedCodes);
-        next.delete(stock_code);
-        return {
-          watchedCodes: next,
-          watchlist: state.watchlist.filter(s => s.id !== item.id),
-        };
-      });
+
+      await get().getWatchlist();
     } catch (error) {
       console.log(error);
     }

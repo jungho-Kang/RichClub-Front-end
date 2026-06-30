@@ -65,9 +65,14 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
         : sellPredictions?.length
       : watchlist?.length;
 
+  const getSignalBadgeClass = (signal?: string) => {
+    if (signal === "매수") return "bg-emerald-500/15 text-emerald-400";
+    if (signal === "매도") return "bg-rose-500/15 text-rose-400";
+    return "bg-zinc-700/40 text-zinc-400";
+  };
+
   return (
     <div className="bg-[#141519] border border-[#26272c] rounded-2xl p-4 flex flex-col h-82">
-      {/* 뷰 토글 (AI예측 / 관심종목) */}
       <div className="flex gap-1 bg-[#0f1013] p-1 rounded-lg mb-3">
         {(["AI예측", "관심종목"] as ViewType[]).map(v => (
           <button
@@ -84,7 +89,6 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
         ))}
       </div>
 
-      {/* 헤더 + 매수/매도 탭 (AI예측일 때만) */}
       <div className="flex items-center justify-between mb-3">
         <div className="text-xs font-medium text-zinc-300 px-1">
           {view === "AI예측" ? "AI예측" : "관심종목"} ({headerCount ?? 0})
@@ -109,7 +113,6 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
         )}
       </div>
 
-      {/* 리스트 */}
       <div className="space-y-3 overflow-y-auto min-h-0 pr-1 scrollbar-thumb-amber-50">
         {view === "AI예측" ? (
           aiList?.length ? (
@@ -127,13 +130,7 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
                         {h.stock_name}
                       </BlurText>
                       <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          h.signal === "매수"
-                            ? "bg-emerald-500/15 text-emerald-400"
-                            : h.signal === "매도"
-                              ? "bg-rose-500/15 text-rose-400"
-                              : "bg-zinc-700/40 text-zinc-400"
-                        }`}
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${getSignalBadgeClass(h.signal)}`}
                       >
                         {h.signal}
                       </span>
@@ -179,10 +176,17 @@ const AIStockList = ({ won, pct }: AIStockListProps) => {
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold">
+                  <div className="text-sm font-semibold flex items-center gap-1.5">
                     <BlurText isLocked={!isLogin} className="truncate">
                       {s.stock_name}
                     </BlurText>
+                    {s.signal && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${getSignalBadgeClass(s.signal)}`}
+                      >
+                        {s.signal}
+                      </span>
+                    )}
                   </div>
                   <div className="text-[11px] text-zinc-500 font-mono">
                     <BlurText isLocked={!isLogin}>{s.stock_code}</BlurText>

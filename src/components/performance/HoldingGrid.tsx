@@ -1,11 +1,5 @@
 import type { Holding } from "@/types/performance";
 
-function fmtPrice(n: number | null | undefined): string {
-  if (n == null) return "—";
-  if (n >= 1000) return `${Math.round(n / 1000)}K`;
-  return n.toLocaleString();
-}
-
 function returnColor(v: number | null | undefined): string {
   if (v == null) return "text-gray-500";
   if (v > 0) return "text-emerald-400";
@@ -36,11 +30,11 @@ const HoldingGrid = ({ holdings }: { holdings: Holding[] }) => {
             {h.stock_name}
           </p>
           <p className="text-[10px] text-gray-600">{h.stock_code}</p>
-          <p className="text-[11px] text-gray-500">
-            매수 {h.buy_date} · {fmtPrice(h.buy_price)}원
+          <p className="text-[11px] text-[#9ca3af ]">
+            매수 {h.buy_date} · {h.buy_price.toLocaleString()}원
           </p>
-          <p className="text-[11px] text-gray-600">
-            현재 {fmtPrice(h.current_price)}
+          <p className="text-[11px] text-[#a8aab0]">
+            현재 {h.current_price.toLocaleString()}원
           </p>
           <p
             className={`text-base font-bold mt-1 ${returnColor(h.unrealized_pct)}`}
