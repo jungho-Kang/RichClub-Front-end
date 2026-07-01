@@ -1,3 +1,4 @@
+import { TELEGRAM_URL } from "@/constants/telegramUrl";
 import { alertError, alertSuccess } from "@/lib/swal";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -165,6 +166,9 @@ export default function Subscription({
       await axios.post("/api/v1/subscription", { plan_id: planId });
       await fetchSubscription();
       onSuccess?.();
+      if (planId === "telegram") {
+        window.open(TELEGRAM_URL, "_blank", "noopener,noreferrer");
+      }
       await alertSuccess("구독 완료", "플랜이 성공적으로 변경되었습니다.");
       onClose();
     } catch {
@@ -173,27 +177,6 @@ export default function Subscription({
       setLoading(false);
     }
   };
-
-  // 구독 해지 기능인데 구독 변경 기능으로 해도 작동됨 [ handleSubscribe("basic-plan")과 동일한 기능 ]
-  //   const handleCancel = async () => {
-  //     const result = await alertDanger(
-  //       "구독을 해지하시겠어요?",
-  //       "기본 플랜으로 변경됩니다.",
-  //       "해지",
-  //     );
-  //     if (!result.isConfirmed) return;
-  //     setLoading(true);
-  //     try {
-  //       await axios.delete("/api/v1/subscription");
-  //       await fetchSubscription();
-  //       onSuccess?.();
-  //       await alertSuccess("구독 해지 완료", "기본 플랜으로 변경되었습니다.");
-  //     } catch {
-  //       await alertError("해지 실패", "잠시 후 다시 시도해주세요.");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
 
   return (
     <div
