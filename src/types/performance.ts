@@ -11,6 +11,7 @@ export interface Trade {
   sell_price?: number;
   return_pct: number;
   unrealized_pct?: number;
+  cash_after?: number;
 }
 
 export interface Holding {
