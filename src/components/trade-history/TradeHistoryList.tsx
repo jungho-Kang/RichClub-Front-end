@@ -60,7 +60,7 @@ const TradeHistoryList = ({
 
   useEffect(() => {
     getTradeHistory();
-  }, []);
+  }, [tradeData]);
 
   return (
     <div>
