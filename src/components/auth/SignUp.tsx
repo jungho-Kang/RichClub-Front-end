@@ -259,20 +259,6 @@ export default function SignUp({ isOpen, onClose }: Props) {
                     readOnly
                     className={`${inputClass} flex-1 cursor-default`}
                   />
-                  {/* 이메일 수정 버튼 */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTimerActive(false);
-                      setStep("email");
-                      codeForm.reset();
-                    }}
-                    className="text-gray-400 hover:text-white transition-colors shrink-0
-                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFF] rounded-sm"
-                    aria-label="이메일 수정"
-                  >
-                    ✏️
-                  </button>
                 </div>
               </div>
 
