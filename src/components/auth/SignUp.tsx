@@ -188,10 +188,7 @@ export default function SignUp({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      onClick={handleClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div
@@ -253,12 +250,7 @@ export default function SignUp({ isOpen, onClose }: Props) {
                   인증할 이메일
                 </label>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={email}
-                    readOnly
-                    className={`${inputClass} flex-1 cursor-default`}
-                  />
+                  <div className="text-white/70">{email}</div>
                 </div>
               </div>
 
