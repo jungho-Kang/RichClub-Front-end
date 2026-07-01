@@ -5,8 +5,11 @@ import type {
   UsePerformanceReturn,
   UseSimulationParams,
   UseSimulationReturn,
+  UseSimulationDetailParams,
+  UseSimulationDetailReturn,
   PerformanceData,
   SimulationData,
+  SimulationDetailData,
 } from "@/types/performance";
 
 const BASE_URL = "/api/v1/market";
@@ -87,4 +90,43 @@ export function useSimulation({
   }, [run]);
 
   return { data, loading, error, refetch: run };
+}
+
+/**
+ * AI 시뮬레이션 연도별 상세 (실제 체결 거래 리스트)
+ * GET /api/v1/market/simulation-detail/{model_id}?year=&max_stocks=
+ *
+ * year가 null이면 요청하지 않음 (모달이 열렸을 때만 호출하도록 사용)
+ */
+export function useSimulationDetail({
+  modelId,
+  year,
+  maxStocks,
+}: UseSimulationDetailParams): UseSimulationDetailReturn {
+  const [data, setData] = useState<SimulationDetailData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDetail = useCallback(async () => {
+    if (!modelId || year == null) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get<SimulationDetailData>(
+        `${BASE_URL}/simulation-detail/${modelId}`,
+        { params: { year: String(year), max_stocks: String(maxStocks) } },
+      );
+      setData(res.data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "알 수 없는 오류");
+    } finally {
+      setLoading(false);
+    }
+  }, [modelId, year, maxStocks]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
+
+  return { data, loading, error, refetch: fetchDetail };
 }

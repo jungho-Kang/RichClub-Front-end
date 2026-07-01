@@ -25,7 +25,12 @@ function signedPct(v: number): string {
   return `${v > 0 ? "+" : ""}${fmt(v)}%`;
 }
 
-const SimulationResult = ({ data }: { data: SimulationData }) => (
+interface SimulationResultProps {
+  data: SimulationData;
+  onViewDetail: (year: number) => void;
+}
+
+const SimulationResult = ({ data, onViewDetail }: SimulationResultProps) => (
   <div className="space-y-4">
     <div className="grid grid-cols-3 gap-3">
       <StatCard label="최종 금액" value={fmtMoney(data.total_final_amount)} />
@@ -56,6 +61,7 @@ const SimulationResult = ({ data }: { data: SimulationData }) => (
                 "최종금액",
                 "수익",
                 "수익률",
+                "",
               ].map(h => (
                 <th
                   key={h}
@@ -99,6 +105,14 @@ const SimulationResult = ({ data }: { data: SimulationData }) => (
                   className={`px-3 py-2.5 font-semibold ${returnColor(y.return_pct)}`}
                 >
                   {signedPct(y.return_pct)}
+                </td>
+                <td className="px-3 py-2.5">
+                  <button
+                    onClick={() => onViewDetail(y.year)}
+                    className="px-2.5 py-1 rounded-md text-xs border border-white/10 text-gray-400 hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
+                  >
+                    상세보기
+                  </button>
                 </td>
               </tr>
             ))}

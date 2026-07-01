@@ -69,19 +69,13 @@ const StockCard = ({ won, pct }: StockCardProps) => {
 
   const { isWatched, removeWatch, addWatch, getWatchlist } =
     useWatchlistStore();
-  const { selectedStock, selectedModel, setSelectedModel, models, setModels } =
-    useStockStore();
-
-  // 모델 목록 조회
-  const getModels = async () => {
-    try {
-      const res = await axios.get("/api/v1/models");
-      const data = res.data;
-      setModels(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const {
+    selectedStock,
+    selectedModel,
+    setSelectedModel,
+    models,
+    fetchModels,
+  } = useStockStore();
 
   const getStockDetail = async () => {
     try {
@@ -114,7 +108,7 @@ const StockCard = ({ won, pct }: StockCardProps) => {
   };
 
   useEffect(() => {
-    getModels();
+    fetchModels();
   }, []);
 
   useEffect(() => {

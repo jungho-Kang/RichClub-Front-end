@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { usePerformance } from "@/hooks/usePerformance";
 import { useStockStore } from "@/stores/useStockStore";
@@ -7,7 +8,6 @@ import type { CalcMode, ModelId, Period } from "@/types/performance";
 import StatCard from "@/components/performance/StatCard";
 import HoldingGrid from "@/components/performance/HoldingGrid";
 import TradesTable from "@/components/performance/TradesTable";
-import SimulationSection from "@/components/performance/SimulationSection";
 
 /* ── 상수 ── */
 const PERIODS: { value: Period; label: string }[] = [
@@ -28,7 +28,7 @@ const CALC_MODES: { value: CalcMode; label: string; desc: string }[] = [
   { value: "avg", label: "평균", desc: "거래 1건당 평균 수익률입니다." },
 ];
 
-type InnerTab = "holdings" | "trades" | "sim";
+type InnerTab = "holdings" | "trades";
 
 /* ── 유틸 ── */
 function fmt(n: number | null | undefined, digits = 2): string {
@@ -59,6 +59,7 @@ function calcReturn(trades: any[], mode: CalcMode): number {
 /* ── 메인 페이지 ── */
 const AIPerformancePage = () => {
   const { models } = useStockStore();
+  const navigate = useNavigate();
 
   const [modelId, setModelId] = useState<ModelId>(
     models.length > 0 ? models[0].id : "ju-model-v2",
@@ -92,12 +93,17 @@ const AIPerformancePage = () => {
     setYear(y);
   };
 
+  const goToSimulation = () => {
+    const params = new URLSearchParams({ modelId });
+    if (yearMode && year) params.set("year", String(year));
+    navigate(`/performance/simulation?${params.toString()}`);
+  };
+
   const calcModeLabel = CALC_MODES.find(c => c.value === calcMode)?.label ?? "";
 
   const innerTabs: { key: InnerTab; label: string }[] = [
     { key: "holdings", label: `현재 보유 (${data?.holdings?.length ?? 0})` },
     { key: "trades", label: `매매 기록 (${data?.trades?.length ?? 0}건)` },
-    { key: "sim", label: "포트폴리오 시뮬레이션" },
   ];
 
   return (
@@ -237,7 +243,7 @@ const AIPerformancePage = () => {
               />
             </div>
 
-            <div className="flex border-b border-white/5 mb-5">
+            <div className="flex border-b border-white/5 mb-5 items-center">
               {innerTabs.map(t => (
                 <button
                   key={t.key}
@@ -251,18 +257,18 @@ const AIPerformancePage = () => {
                   {t.label}
                 </button>
               ))}
+              <button
+                onClick={goToSimulation}
+                className="ml-auto px-4 py-2 text-xs rounded-md bg-indigo-950 border border-indigo-500 text-indigo-300 hover:bg-indigo-900 transition-colors"
+              >
+                수익 시뮬레이션
+              </button>
             </div>
 
             {tab === "holdings" && (
               <HoldingGrid holdings={data.holdings ?? []} />
             )}
             {tab === "trades" && <TradesTable trades={data.trades ?? []} />}
-            {tab === "sim" && (
-              <SimulationSection
-                modelId={modelId}
-                year={yearMode ? year : null}
-              />
-            )}
           </>
         )}
       </div>

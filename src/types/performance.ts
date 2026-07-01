@@ -83,3 +83,23 @@ export interface UseSimulationReturn {
   error: string | null;
   refetch: () => void;
 }
+
+export interface SimulationDetailData {
+  model_id: string;
+  year: number;
+  max_stocks: number;
+  trades: Trade[];
+}
+
+export interface UseSimulationDetailParams {
+  modelId: ModelId;
+  year: number | null;
+  maxStocks: number;
+}
+
+export interface UseSimulationDetailReturn {
+  data: SimulationDetailData | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}

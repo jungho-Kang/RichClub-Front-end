@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSimulation } from "@/hooks/usePerformance";
 import type { ModelId } from "@/types/performance";
 import SimulationResult from "./SimulationResult";
+import SimulationDetailModal from "./Simulationdetailmodal";
 
 const PRINCIPAL_PRESETS = [1_000_000, 5_000_000, 10_000_000, 50_000_000];
 
@@ -25,6 +26,7 @@ const SimulationSection = ({ modelId, year }: SimulationSectionProps) => {
     principal: 10_000_000,
     maxStocks: 10,
   });
+  const [detailYear, setDetailYear] = useState<number | null>(null);
 
   const { data, loading, error } = useSimulation({
     modelId,
@@ -95,7 +97,18 @@ const SimulationSection = ({ modelId, year }: SimulationSectionProps) => {
         <p className="text-center text-gray-600 text-sm py-8">계산 중...</p>
       )}
       {error && <p className="text-red-400 text-sm py-4">오류: {error}</p>}
-      {data && !loading && <SimulationResult data={data} />}
+      {data && !loading && (
+        <SimulationResult data={data} onViewDetail={y => setDetailYear(y)} />
+      )}
+
+      {detailYear != null && (
+        <SimulationDetailModal
+          modelId={modelId}
+          year={detailYear}
+          maxStocks={submitted.maxStocks}
+          onClose={() => setDetailYear(null)}
+        />
+      )}
     </div>
   );
 };
